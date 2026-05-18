@@ -2,10 +2,16 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/server.ts",
+  "build": "tsc",
+  "start": "node dist/index.js",
+  "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+  "migration:generate": "npm run typeorm -- migration:generate src/migrations/Migration -d src/config/data-source.ts",
+  "migration:run": "npm run typeorm -- migration:run -d src/config/data-source.ts",
+  "migration:revert": "npm run typeorm -- migration:revert -d src/config/data-source.ts"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -32,6 +38,9 @@
     "joi": "^18.2.1",
     "jsonwebtoken": "^9.0.3",
     "knex": "^3.2.10",
+    "pg": "^8.20.0",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.29",
     "uuid": "^14.0.0"
   }
 }

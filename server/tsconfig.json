@@ -9,10 +9,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,  
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "ignoreDeprecations" : "6.0",
     "baseUrl": "./src",
     "paths": {
       "@/*": ["./*"]
