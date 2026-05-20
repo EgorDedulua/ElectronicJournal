@@ -10,7 +10,8 @@ export const validate = (
     return (req: Request, res: Response, next: NextFunction) => {
         const { error, value } = schema.validate(req[target], {
             abortEarly: false,
-            stripUnknown: true
+            stripUnknown: false,
+            allowUnknown: target === 'query' 
         });
 
         if (error) {

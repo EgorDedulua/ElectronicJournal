@@ -1,8 +1,10 @@
 import {
     Entity,
     PrimaryGeneratedColumn,
-    Column
+    Column,
+    OneToMany
 } from 'typeorm';
+import { Course } from './course';
 
 @Entity('subjects')
 export class Subject {
@@ -11,4 +13,7 @@ export class Subject {
 
     @Column({ unique: true })
     name!: string;
+
+    @OneToMany(() => Course, (course) => course.subject)
+    courses!: Course[];
 }

@@ -14,11 +14,13 @@ export const registerSchema = Joi.object({
         'string.base' : 'Пароль должен быть строкой',
     }),
     fullName: Joi.string().required().min(2).messages({
-        'any.reqired' : 'Полное имя обязательно',
+        'any.required' : 'Полное имя обязательно',
         'string.min' : 'Полное имя не может быть короче 2 символов',
         'string.base' : 'Полное имя должно быть строкой'
     }),
-    groupId: Joi.number().message('Id группы должно быть числом'),
+    groupId: Joi.number().optional().messages({
+        'number.base' : 'Id группы должно быть числом'
+    }),
     role: Joi.string().required().valid('student', 'teacher').messages({
         'any.required' : 'Роль обязательна',
         'any.only': 'Роль должна быть student или teacher',

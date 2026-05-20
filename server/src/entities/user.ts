@@ -9,7 +9,8 @@ import { Group } from './group';
 
 export enum UserRole {
     STUDENT = 'student',
-    TEACHER = 'teacher'
+    TEACHER = 'teacher',
+    ADMIN = 'admin'
 }
 
 @Entity('users')
@@ -30,9 +31,9 @@ export class User {
     fullName!: string;
 
     @ManyToOne(() => Group, (group) => group.students, { nullable: true, onDelete: 'SET NULL' })
-    @JoinColumn({ name: 'groupId' })
-    group!: Group | null;
+    @JoinColumn({ name: 'group_id' })
+    group?: Group;
 
-    @Column()
-    groupId!: number;
+    @Column({ name: 'group_id' })
+    groupId?: number;
 }

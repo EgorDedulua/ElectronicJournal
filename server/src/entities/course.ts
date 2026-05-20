@@ -15,20 +15,23 @@ export class Course {
     id!: number;
 
     @ManyToOne(() => User, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'teacherId' })
+    @JoinColumn({ name: 'teacher_id' })
     teacher!: User;
 
-    @Column()
+    @Column({ name: 'teacher_id' })
     teacherId!: number;
 
     @ManyToOne(() => Group, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'groupId' })
+    @JoinColumn({ name: 'group_id' })
     group!: Group;
 
-    @Column()
+    @Column({ name: 'group_id' })
     groupId!: number;
 
     @ManyToOne(() => Subject, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'subjectId' })
+    @JoinColumn({ name: 'subject_id' })
     subject!: Subject;
+
+    @Column({ name: 'subject_id' })
+    subjectId!: number;
 }

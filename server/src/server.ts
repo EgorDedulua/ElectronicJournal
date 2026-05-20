@@ -1,13 +1,21 @@
+import 'express-async-errors';
 import 'reflect-metadata';
 import { AppDataSource } from './config/data-source';
 import express, { Application } from 'express';
-import dotenv from 'dotenv';
 import { config } from '@/config/config';
+import adminRouter from './routers/adminRouter';
+import authRouter from './routers/authRouter';
+import { errorHandler } from './middlewares/errorMiddleware';
+import cookieParser from 'cookie-parser';
 
-dotenv.config();
 
 const app: Application = express();
 const PORT = config.PORT;
+app.use(express.json());
+app.use(cookieParser());
+app.use('/api/admin', adminRouter);
+app.use('/api', authRouter);
+app.use(errorHandler);
 
 AppDataSource.initialize()
     .then(() => {
