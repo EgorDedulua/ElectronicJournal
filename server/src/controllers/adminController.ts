@@ -3,9 +3,12 @@ import { GroupDTO } from "@/dto/groupDTO";
 import { SubjectDTO } from "@/dto/subjectDTO";
 import { AdminService } from "@/services/adminService";
 import { Request, Response } from "express";
-import { UsersQueryDTO } from "@/dto/usersQueryDTO";
-import { SubjectsQueryDTO } from "@/dto/subjectsQueryDTO";
-import { GroupsQueryDTO } from "@/dto/groupsQueryDTO";
+import { UsersQueryDTO } from "@/dto/queries/usersQueryDTO";
+import { SubjectsQueryDTO } from "@/dto/queries/subjectsQueryDTO";
+import { GroupsQueryDTO } from "@/dto/queries/groupsQueryDTO";
+import { CoursesQueryDTO } from "@/dto/queries/coursesQueryDTO";
+import { CourseService } from "@/services/courseService";
+import { CourseDTO } from "@/dto/courseDTO";
 
 export class AdminController {
     public static async getUsers(req: Request, res: Response) {
@@ -80,6 +83,31 @@ export class AdminController {
         const groupId = Number(req.params.id);
         const dto: GroupDTO = req.body;
         const result = await AdminService.updateGroup(groupId, dto);
+        res.status(200).json(result);
+    }
+
+    public static async getCourses(req: Request, res: Response) {
+        const dto: CoursesQueryDTO = req.query;
+        const result = await CourseService.getCourses(dto);
+        res.status(200).json(result);
+    }
+
+    public static async addCourse(req: Request, res: Response) {
+        const dto: CourseDTO = req.body;
+        const result = await CourseService.addCourse(dto);
+        res.status(201).json(result);
+    }
+
+    public static async deleteCourse(req: Request, res: Response) {
+        const courseId = Number(req.params.id);
+        await CourseService.deleteCourse(courseId);
+        res.status(204).send();
+    }
+
+    public static async updateCourse(req: Request, res: Response) {
+        const courseId = Number(req.params.id);
+        const dto: CourseDTO = req.body;
+        const result = await CourseService.updateCourse(courseId, dto);
         res.status(200).json(result);
     }
 }

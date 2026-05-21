@@ -5,12 +5,14 @@ import { authorize } from "@/middlewares/authorizeMiddleware";
 import { validate } from "@/middlewares/validationMiddleware";
 import { registerSchema } from "@/validation/registerSchema";
 import { groupSchema } from "@/validation/groupSchema";
-import { idSchema } from "@/validation/idSchema";
+import { idSchema } from "@/validation/common/idSchema";
 import { subjectSchema } from "@/validation/subjectSchema";
 import { Router } from "express";
-import { searchingSchema } from "@/validation/searchingSchema";
-import { usersQuerySchema } from "@/validation/usersQuerySchema";
-import { subjectsQuerySchema } from "@/validation/subjectsQuerySchema";
+import { searchingSchema } from "@/validation/common/searchingSchema";
+import { usersQuerySchema } from "@/validation/queries/usersQuerySchema";
+import { subjectsQuerySchema } from "@/validation/queries/subjectsQuerySchema";
+import { coursesQuerySchema } from "@/validation/queries/coursesQuerySchema";
+import { courseSchema } from "@/validation/courseSchema";
 
 const adminRouter = Router();
 
@@ -28,5 +30,8 @@ adminRouter.get('/groups', validate(searchingSchema, 'query'), AdminController.g
 adminRouter.post('/groups', validate(groupSchema), AdminController.addGroup);
 adminRouter.delete('/groups/:id', validate(idSchema, 'params'), AdminController.deleteGroup);
 adminRouter.put('/groups/:id', validate(idSchema, 'params'), validate(groupSchema), AdminController.updateGroup);
-
+adminRouter.get('/courses', validate(searchingSchema, 'query'), validate(coursesQuerySchema, 'query'), AdminController.getCourses);
+adminRouter.post('/courses', validate(courseSchema), AdminController.addCourse);
+adminRouter.delete('/courses/:id', validate(idSchema, 'params'), AdminController.deleteCourse);
+adminRouter.put('/courses/:id', validate(idSchema, 'params'), validate(courseSchema), AdminController.updateCourse);
 export default adminRouter;

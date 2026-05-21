@@ -7,10 +7,10 @@ import { Group } from "@/entities/group";
 import { SubjectDTO } from "@/dto/subjectDTO";
 import { GroupDTO } from "@/dto/groupDTO";
 import { Subject } from "@/entities/subject";
-import { UsersQueryDTO } from "@/dto/usersQueryDTO";
+import { UsersQueryDTO } from "@/dto/queries/usersQueryDTO";
 import { Brackets, } from "typeorm";
-import { SubjectsQueryDTO } from "@/dto/subjectsQueryDTO";
-import { GroupsQueryDTO } from "@/dto/groupsQueryDTO";
+import { SubjectsQueryDTO } from "@/dto/queries/subjectsQueryDTO";
+import { GroupsQueryDTO } from "@/dto/queries/groupsQueryDTO";
 
 export class AdminService {
     private static userRepository = AppDataSource.getRepository(User);
@@ -64,7 +64,7 @@ export class AdminService {
                 total: total,
                 totalPages: Math.ceil(total / pageSize)
             }
-        }
+        };
     }
 
     public static async registerUser(dto: RegisterDTO) {
