@@ -9,6 +9,8 @@ import { GroupsQueryDTO } from "@/dto/queries/groupsQueryDTO";
 import { CoursesQueryDTO } from "@/dto/queries/coursesQueryDTO";
 import { CourseService } from "@/services/courseService";
 import { CourseDTO } from "@/dto/courseDTO";
+import { TimetableDTO } from "@/dto/timetableDTO";
+import { TimetableService } from "@/services/timetableService";
 
 export class AdminController {
     public static async getUsers(req: Request, res: Response) {
@@ -109,5 +111,30 @@ export class AdminController {
         const dto: CourseDTO = req.body;
         const result = await CourseService.updateCourse(courseId, dto);
         res.status(200).json(result);
+    }
+
+    public static async getTimetables(req: Request, res: Response) {
+        const groupId = Number(req.query.id);
+        const result = await TimetableService.getTimetables(groupId);
+        res.status(200).json(result);
+    }
+
+    public static async addTimetable(req: Request, res: Response) {
+        const dto: TimetableDTO[] = req.body;
+        const result = await TimetableService.addTimetable(dto);
+        res.status(200).json(result);
+    }
+
+    public static async updateTimetable(req: Request, res: Response) {
+        const timetableId = Number(req.params.id);
+        const dto: TimetableDTO = req.body;
+        const result = await TimetableService.updateTimetable(timetableId, dto);
+        res.status(200).json(result);
+    }
+
+    public static async deleteTimetable(req: Request, res: Response) {
+        const timetableId = Number(req.params.id);
+        await TimetableService.deleteTimetable(timetableId);
+        res.status(204).send();
     }
 }

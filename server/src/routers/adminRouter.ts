@@ -13,6 +13,7 @@ import { usersQuerySchema } from "@/validation/queries/usersQuerySchema";
 import { subjectsQuerySchema } from "@/validation/queries/subjectsQuerySchema";
 import { coursesQuerySchema } from "@/validation/queries/coursesQuerySchema";
 import { courseSchema } from "@/validation/courseSchema";
+import { timetableArraySchema, timetableSchema } from "@/validation/timetableSchema";
 
 const adminRouter = Router();
 
@@ -34,4 +35,8 @@ adminRouter.get('/courses', validate(searchingSchema, 'query'), validate(courses
 adminRouter.post('/courses', validate(courseSchema), AdminController.addCourse);
 adminRouter.delete('/courses/:id', validate(idSchema, 'params'), AdminController.deleteCourse);
 adminRouter.put('/courses/:id', validate(idSchema, 'params'), validate(courseSchema), AdminController.updateCourse);
+adminRouter.get('/timetables', validate(idSchema, 'query'), AdminController.getTimetables);
+adminRouter.post('/timetables', validate(timetableArraySchema), AdminController.addTimetable);
+adminRouter.delete('/timetables/:id', validate(idSchema, 'params'), AdminController.deleteTimetable);
+adminRouter.put('/timetables/:id', validate(idSchema, 'params'), validate(timetableSchema), AdminController.updateTimetable);
 export default adminRouter;

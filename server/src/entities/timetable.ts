@@ -6,6 +6,9 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 import { Course } from './course';
+import { LessonTimings } from './lessonTimings';
+import { Group } from './group';
+import { User } from './user';
 
 export enum DayOfWeek {
     MONDAY = 1,
@@ -32,15 +35,27 @@ export class Timetable {
     @Column({ type: 'enum', enum: DayOfWeek })
     dayOfWeek!: DayOfWeek;
 
-    @Column({ type: 'time' })
-    startTime!: string;
-
-    @Column({ type: 'time'})
-    endTime!: string;
-
     @Column()
     room!: string;
 
-    @Column()
-    lessonNumber!: number;
+    @ManyToOne(() => LessonTimings, { onDelete: 'CASCADE', nullable: false })
+    @JoinColumn({ name: 'lesson_timings_id' })
+    lessonTimings!: LessonTimings;
+
+    @Column({ name: 'lesson_timings_id' })
+    lessonTimingsId!: number;
+
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'teacher_id' })
+    teacher!: User;
+
+    @Column({ name: 'teacher_id' })
+    teacherId!: number;
+
+    @ManyToOne(() => Group, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'group_id' })
+    group!: Group;
+
+    @Column({ name: 'group_id' })
+    groupId!: number;
 }
