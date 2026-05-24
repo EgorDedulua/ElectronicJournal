@@ -3,12 +3,12 @@ import Joi from "joi";
 
 export const timetableSchema = Joi.object({
     courseId: idField(),
-    dayOfWeek: Joi.number().min(1).max(7).integer().required().messages({
+    dayOfWeek: Joi.number().min(1).max(6).integer().required().messages({
         'any.required' : 'День недели обязателен',
         'number.base' : 'День недели должен передаваться в виде числа',
         'number.integer' : 'День недели должен передаваться в виде целого чисоа',
-        'number.min' : 'День недели должен быть числом от 1 до 7',
-        'number.max' : 'День недели должен быть числом от 1 до 7'
+        'number.min' : 'День недели должен быть числом от 1 до 6',
+        'number.max' : 'День недели должен быть числом от 1 до 6'
     }),
     room: Joi.string().max(50).required().messages({
         'any.required' : 'Кабинет обязателен',

@@ -5,7 +5,9 @@ import { Group } from "@/entities/group";
 import { LessonTimings } from "@/entities/lessonTimings";
 import { Timetable } from "@/entities/timetable";
 import { AppError } from "@/utils/appError";
+import { JwtPayload } from "@/middlewares/authMiddleware";
 import { In, Not } from "typeorm";
+import { User } from "@/entities/user";
 
 
 export class TimetableService {
@@ -13,12 +15,37 @@ export class TimetableService {
     private static lessonTimingsRepository = AppDataSource.getRepository(LessonTimings);
     private static courseRepository = AppDataSource.getRepository(Course);
     private static groupRepository = AppDataSource.getRepository(Group);
+    private static userRepository = AppDataSource.getRepository(User);
 
-    public static async getTimetables(groupId: number) {
+    public static async getTimetables(userInfo: JwtPayload, groupId: number) {
         const group = this.groupRepository.findOneBy({ id: groupId });
         if (!group) {
             throw new AppError(`Не найдена группа с id ${groupId}`, 404);
         } 
+        
+
+        if (userInfo.role !== 'admin') {
+            const user = await this.userRepository.findOneBy({ id: userInfo.id });
+            if (!user) {
+                throw new AppError(`Не найден пользователь с id ${userInfo.id}`, 404);
+            }
+
+            switch (userInfo.role) {
+                case 'student':
+                    if (user.groupId != groupId) {
+                        throw new AppError(`Студент с id ${user.id} не учится в группе с id ${groupId}`, 403);
+                    }
+                case 'teacher':
+                    if (user.groupId !== groupId) {
+                        const teacherCourses = await this.courseRepository.findBy({ teacherId: user.id });
+                        if (!teacherCourses.some(c => c.groupId === groupId)) {
+                            throw new AppError(`Преподаватель с id ${user.id} не является куратором или преподавателем в группе с id ${groupId}`, 403);
+                        }
+                    }
+                default:
+                    throw new AppError('Неизвестная роль пользователя', 400);
+            }
+        }
 
         const timetables = await this.timetableRepository.find({ 
             where: { groupId },

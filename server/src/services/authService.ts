@@ -13,7 +13,7 @@ export class AuthService {
     private static userRepository = AppDataSource.getRepository(User);
 
     public static async login(dto: LoginDTO) {
-        const user = await this.userRepository.findOneBy({ login: dto.login });
+        const user = await this.userRepository.findOne({ where: { login: dto.login }, relations: ['group'] });
         if (!user) {
             throw new AppError('Неверный логин или пароль', 401);
         }
@@ -28,7 +28,7 @@ export class AuthService {
 
         return {
             token: token,
-            data: { id: user.id, fullName: user.fullName, role: user.role, group: user.group?.name }
+            data: { id: user.id, fullName: user.fullName, role: user.role, groupName: user.group?.name }
         };
     }
 }

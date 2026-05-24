@@ -5,7 +5,7 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn
 } from 'typeorm';
-import { Timetable } from './timetable';
+import { Course } from './course';
 
 export enum LessonType {
     USUAL = 'usual',
@@ -20,15 +20,15 @@ export class Lesson {
     @PrimaryGeneratedColumn('increment')
     id!: number;
 
-    @ManyToOne(() => Timetable, { onDelete: 'CASCADE', nullable: false })
-    @JoinColumn({ name: 'timetable_id' })
-    timetable!: Timetable;
+    @ManyToOne(() => Course, { onDelete: 'CASCADE', nullable: false })
+    @JoinColumn({ name: 'course_id' })
+    course!: Course;
 
-    @Column({ name: 'timetable_id' })
-    timetableId!: number;
-
+    @Column({ name: 'course_id' })
+    courseId!: number;
+    
     @Column({ type: 'date' })
-    date!: Date;
+    date!: string;
 
     @Column()
     topic!: string;

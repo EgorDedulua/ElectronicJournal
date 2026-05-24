@@ -5,6 +5,7 @@ import {
   OneToMany
 } from 'typeorm';
 import { User } from './user';
+import { Course } from './course';
 
 @Entity('groups')
 export class Group {
@@ -16,4 +17,7 @@ export class Group {
     
     @OneToMany(() => User, (user) => user.group)
     students!: User[];
+
+    @OneToMany(() => Course, (course) => course.group)
+    courses!: Course[];
 }
