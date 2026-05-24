@@ -57,6 +57,14 @@ export class TeacherController {
         res.status(204).send();
     }
 
+    public static async updateMark(req: Request, res: Response) {
+        const { groupId, subjectId, lessonId, id } = req.params;
+        const { mark } = req.body;
+        const result = await TeacherService.updateMark(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId),
+            Number(id), mark);
+        res.status(200).json(result);
+    }
+
     public static async getStudentsAbsences(req: Request, res: Response) {
         const groupId = Number(req.params.groupId);
         const subjectId = Number(req.params.subjectId);
@@ -95,6 +103,14 @@ export class TeacherController {
         const { groupId, subjectId, lessonId, id } = req.params;
         await TeacherService.deleteLate(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(id));
         res.status(204).send();
+    }
+
+    public static async updateLate(req: Request, res: Response) {
+        const { groupId, subjectId, lessonId, id } = req.params;
+        const { minutes } = req.body;
+        const result = await TeacherService.updateLate(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), 
+            Number(id), minutes);
+        res.status(200).json(result);
     }
 
     public static async getStudentsCredits(req: Request, res: Response) {

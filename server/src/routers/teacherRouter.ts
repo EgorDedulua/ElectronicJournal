@@ -11,6 +11,8 @@ import { markSchema } from "@/validation/markSchema";
 import { Router } from "express";
 import { studentIdSchema } from "@/validation/common/studentIdSchema";
 import { lateSchema } from "@/validation/lateSchema";
+import { updateLateSchema } from "@/validation/updateLateSchema";
+import { updateMarkSchema } from "@/validation/updateMarkSchema";
 
 const teacherRouter = Router();
 
@@ -31,6 +33,8 @@ teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/marks
     ,validate(markSchema), TeacherController.addMark);
 teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/marks/:id', validate(groupAndSubjectIdSchema, 'params')
     ,validate(lessonIdSchema, 'params'), validate(idSchema, 'params'), TeacherController.deleteMark);
+teacherRouter.patch('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/marks/:id', validate(groupAndSubjectIdSchema, 'params')
+    ,validate(lessonIdSchema, 'params'), validate(idSchema, 'params'), validate(updateMarkSchema), TeacherController.updateMark);
 
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/absences', validate(groupAndSubjectIdSchema, 'params'), TeacherController.getStudentsAbsences);
 teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/absences', validate(groupAndSubjectIdSchema, 'params'), validate(lessonIdSchema, 'params')
@@ -43,6 +47,8 @@ teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/lates
     ,validate(lateSchema), TeacherController.addLate);
 teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/lates/:id', validate(groupAndSubjectIdSchema, 'params')
     ,validate(lessonIdSchema, 'params'), validate(idSchema, 'params'), TeacherController.deleteLate);
+teacherRouter.patch('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/lates/:id', validate(groupAndSubjectIdSchema, 'params')
+    ,validate(lessonIdSchema, 'params'), validate(idSchema, 'params'), validate(updateLateSchema), TeacherController.updateLate);
 
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/credits', validate(groupAndSubjectIdSchema, 'params'), TeacherController.getStudentsCredits);
 teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/credits', validate(groupAndSubjectIdSchema, 'params'), validate(lessonIdSchema, 'params')

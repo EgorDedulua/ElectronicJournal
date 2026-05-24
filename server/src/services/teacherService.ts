@@ -130,6 +130,54 @@ export class TeacherService {
         });
     }
 
+    public static async updateMark(userId: number, subjectId: number, groupId: number, lessonId: number, markId: number, newMark: number) {
+        const course = await this.checkTeacherAndCourse(userId, groupId, subjectId);
+        const lesson = await this.checkLesson(lessonId);
+        this.checkLessonCourse(lesson, course);
+
+        return await AppDataSource.transaction(async (manager) => {
+            const markRepo = manager.getRepository(Mark);
+            const creditRepo = manager.getRepository(Credit);
+
+            const mark = await markRepo.findOneBy({ id: markId, lessonId: lessonId });
+            if (!mark) {
+                throw new AppError(`Не найдена оценка с id ${markId} на уроке с id ${lessonId}`, 404);
+            }
+
+            await this.checkStudent(mark.studentId, groupId);
+            mark.mark = newMark;
+
+            let newCredit = null;
+            if (lesson.type === LessonType.LAB || lesson.type === LessonType.PRACTICE) {
+                if (mark.mark > 3 && !await creditRepo.findOne({ where: { lessonId: lessonId, studentId: mark.studentId }})) {
+                    
+                    newCredit = await creditRepo.create({
+                        studentId: mark.studentId,
+                        lessonId: lessonId
+                    });
+
+                    await creditRepo.save(newCredit);
+                } else if (mark.mark < 3 && await creditRepo.findOne({ where: { lessonId: lessonId, studentId: mark.studentId }})) {
+                    const credit = await creditRepo.findOne({ where: { lessonId: lessonId, studentId: mark.studentId }});
+                    if (credit) {
+                        await creditRepo.delete(credit);
+                    }
+                }
+            }
+
+            await markRepo.save(mark);
+            return {
+                data: {
+                    id: mark.id,
+                    lessonId: mark.lessonId,
+                    mark: mark.mark,
+                    studentId: mark.studentId,
+                    credit: newCredit ? { id: newCredit.id, lessonId: newCredit.lessonId, studentId: newCredit.studentId } : undefined,
+                }
+            };
+        });
+    }
+
     public static async addLate(userId: number, subjectId: number, groupId: number, lessonId: number, dto: LateDTO) {
         const course = await this.checkTeacherAndCourse(userId, groupId, subjectId);
         const lesson = await this.checkLesson(lessonId);
@@ -163,6 +211,26 @@ export class TeacherService {
         }
 
         await this.lateRepository.delete(late);
+    }
+
+    public static async updateLate(userId: number, subjectId: number, groupId: number, lessonId: number, lateId: number, minutes: number) {
+        const course = await this.checkTeacherAndCourse(userId, groupId, subjectId);
+        const lesson = await this.checkLesson(lessonId);
+        this.checkLessonCourse(lesson, course);
+
+        const late = await this.lateRepository.findOneBy({ id: lateId, lessonId: lessonId });
+        if (!late) {
+            throw new AppError(`Не найдено опоздание с id ${lateId} на уроке с id ${lessonId}`, 404);
+        }
+
+        await this.checkStudent(late.studentId, groupId);
+        late.minutes = minutes;
+
+        await this.lateRepository.save(late);
+
+        return {
+            data: { id: late.id, lessonId: late.lessonId, studentId: late.studentId, minutes: late.minutes }
+        }
     }
 
     public static async addAbsence(userId: number, subjectId: number, groupId: number, lessonId: number, studentId: number) {
