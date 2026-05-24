@@ -14,29 +14,36 @@ import { subjectsQuerySchema } from "@/validation/queries/subjectsQuerySchema";
 import { coursesQuerySchema } from "@/validation/queries/coursesQuerySchema";
 import { courseSchema } from "@/validation/courseSchema";
 import { timetableArraySchema, timetableSchema } from "@/validation/timetableSchema";
+import { updateUserSchema } from "@/validation/updateUserSchema";
 
 const adminRouter = Router();
 
 adminRouter.use(authenticate);
 adminRouter.use(authorize(UserRole.ADMIN));
+
 adminRouter.get('/users', validate(searchingSchema, 'query'), validate(usersQuerySchema, 'query'), AdminController.getUsers);
 adminRouter.post('/users', validate(registerSchema), AdminController.registerUser);
 adminRouter.delete('/users/:id', validate(idSchema, 'params'), AdminController.deleteUser);
-adminRouter.put('/users/:id', validate(idSchema, 'params'), validate(registerSchema), AdminController.updateUser);
+adminRouter.put('/users/:id', validate(idSchema, 'params'), validate(updateUserSchema), AdminController.updateUser);
+
 adminRouter.get('/subjects', validate(searchingSchema, 'query'), validate(subjectsQuerySchema, 'query'), AdminController.getSubjects);
 adminRouter.post('/subjects', validate(subjectSchema), AdminController.addSubject);
 adminRouter.delete('/subjects/:id', validate(idSchema, 'params'), AdminController.deleteSubject);
 adminRouter.put('/subjects/:id', validate(idSchema, 'params'), validate(subjectSchema), AdminController.updateSubject);
+
 adminRouter.get('/groups', validate(searchingSchema, 'query'), AdminController.getGroups);
 adminRouter.post('/groups', validate(groupSchema), AdminController.addGroup);
 adminRouter.delete('/groups/:id', validate(idSchema, 'params'), AdminController.deleteGroup);
 adminRouter.put('/groups/:id', validate(idSchema, 'params'), validate(groupSchema), AdminController.updateGroup);
+
 adminRouter.get('/courses', validate(searchingSchema, 'query'), validate(coursesQuerySchema, 'query'), AdminController.getCourses);
 adminRouter.post('/courses', validate(courseSchema), AdminController.addCourse);
 adminRouter.delete('/courses/:id', validate(idSchema, 'params'), AdminController.deleteCourse);
 adminRouter.put('/courses/:id', validate(idSchema, 'params'), validate(courseSchema), AdminController.updateCourse);
+
 adminRouter.get('/timetables', validate(idSchema, 'query'), AdminController.getTimetables);
 adminRouter.post('/timetables', validate(timetableArraySchema), AdminController.addTimetable);
 adminRouter.delete('/timetables/:id', validate(idSchema, 'params'), AdminController.deleteTimetable);
 adminRouter.put('/timetables/:id', validate(idSchema, 'params'), validate(timetableSchema), AdminController.updateTimetable);
+
 export default adminRouter;

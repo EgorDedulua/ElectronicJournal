@@ -548,6 +548,10 @@ export class TeacherService {
         if (student.groupId !== groupId) {
             throw new AppError(`Студент с id ${studentId} не учится в группе с id ${groupId}`, 400);
         }
+
+        if (student.isExpelled) {
+            throw new AppError(`Студент с id ${studentId} отчислен`, 400);
+        }
     }
 
     private static async checkTeacherAndCourse(teacherId: number, groupId: number, subjectId: number) {
