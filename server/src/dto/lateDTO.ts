@@ -1,4 +1,4 @@
 export interface LateDTO {
-    minutes: number;
+    minutes?: number;
     studentId: number;
 }

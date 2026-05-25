@@ -8,10 +8,13 @@ import { Credit } from "@/entities/credit";
 import { Group } from "@/entities/group";
 import { Late } from "@/entities/late";
 import { Lesson, LessonType } from "@/entities/lesson";
+import { LessonTimings } from "@/entities/lessonTimings";
 import { Mark } from "@/entities/mark";
 import { Subject } from "@/entities/subject";
+import { Timetable } from "@/entities/timetable";
 import { User, UserRole } from "@/entities/user";
 import { AppError } from "@/utils/appError";
+import { LessThan, MoreThan } from "typeorm";
 
 export class TeacherService {
     private static userRepository = AppDataSource.getRepository(User);
@@ -23,7 +26,9 @@ export class TeacherService {
     private static absenceRepository = AppDataSource.getRepository(Absence);
     private static lateRepository = AppDataSource.getRepository(Late);
     private static creditRepository = AppDataSource.getRepository(Credit);
-    
+    private static lessonTimingsRepository = AppDataSource.getRepository(LessonTimings);
+    private static timetableRepository = AppDataSource.getRepository(Timetable);
+
     public static async addLesson(userId: number, subjectId: number, groupId: number, dto: LessonDTO) {
         const course = await this.checkTeacherAndCourse(userId, groupId, subjectId);
 
@@ -188,11 +193,23 @@ export class TeacherService {
             throw new AppError(`У студента с id ${dto.studentId} уже есть опоздание на урок с id ${lessonId}`, 400);
         }
 
-        const newLate = await this.lateRepository.create({
-            lessonId: lessonId,
-            minutes: dto.minutes,
-            studentId: dto.studentId
-        });
+        let newLate;
+        if (!dto.minutes) {
+            const minutes = await this.calculateLateMinutes(groupId, lesson);
+
+            newLate = await this.lateRepository.create({
+                lessonId: lessonId,
+                minutes: minutes,
+                studentId: dto.studentId
+            });
+        } else {
+            newLate = await this.lateRepository.create({
+                lessonId: lessonId,
+                minutes: dto.minutes,
+                studentId: dto.studentId
+            });
+        }
+
         await this.lateRepository.save(newLate);
 
         return {
@@ -213,7 +230,7 @@ export class TeacherService {
         await this.lateRepository.delete(late);
     }
 
-    public static async updateLate(userId: number, subjectId: number, groupId: number, lessonId: number, lateId: number, minutes: number) {
+    public static async updateLate(userId: number, subjectId: number, groupId: number, lessonId: number, lateId: number, minutes?: number) {
         const course = await this.checkTeacherAndCourse(userId, groupId, subjectId);
         const lesson = await this.checkLesson(lessonId);
         this.checkLessonCourse(lesson, course);
@@ -223,14 +240,19 @@ export class TeacherService {
             throw new AppError(`Не найдено опоздание с id ${lateId} на уроке с id ${lessonId}`, 404);
         }
 
-        await this.checkStudent(late.studentId, groupId);
-        late.minutes = minutes;
+        if (!minutes) {
+            const calculatedMinutes = await this.calculateLateMinutes(groupId, lesson);
+
+            late.minutes = calculatedMinutes;
+        } else {
+            late.minutes = minutes;
+        }
 
         await this.lateRepository.save(late);
 
         return {
             data: { id: late.id, lessonId: late.lessonId, studentId: late.studentId, minutes: late.minutes }
-        }
+        };
     }
 
     public static async addAbsence(userId: number, subjectId: number, groupId: number, lessonId: number, studentId: number) {
@@ -602,5 +624,40 @@ export class TeacherService {
         if (lesson.courseId != course.id) {
             throw new AppError(`Урок с id ${lesson.id} не принадлежит курсу с id ${course.id}`, 400);
         }
+    }
+
+    private static async calculateLateMinutes(groupId: number, lesson: Lesson) {
+        const now = new Date();
+
+        const today = new Date().toISOString().split('T')[0];
+        const lessonDate = lesson.date.substring(0, 10);
+
+        if (lessonDate !== today) {
+            throw new AppError('Автоматический расчёт опоздания возможен только для сегодняшнего урока', 400);
+        }
+
+        const currentTime = now.toTimeString().split(' ')[0];
+
+        const lessonTiming = await this.lessonTimingsRepository.findOne({ where: { 
+            startTime: LessThan(currentTime),
+            endTime: MoreThan(currentTime)
+        } });
+
+        if (!lessonTiming) {
+            throw new AppError('Невозможно автоматически рассчитать время опоздания во внеурочное время', 400);
+        }
+
+        const timetable = await this.timetableRepository.findOneBy({ lessonTimingsId: lessonTiming.id, groupId: groupId, dayOfWeek: now.getDay() });
+        if (!timetable) {
+            throw new AppError(`Невозможно автоматически рассчитать время опоздания, так как у группы с id ${groupId} нет урока в это время`, 400);
+        }
+
+        const [startHours, startMinutes] = lessonTiming.startTime.split(':').map(Number);
+        const startTotalMinutes = startHours * 60 + startMinutes;
+        const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+        const diffMinutes = currentTotalMinutes - startTotalMinutes;
+
+        
+        return diffMinutes;
     }
 }
