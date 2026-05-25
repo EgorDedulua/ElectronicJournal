@@ -18,6 +18,9 @@ const teacherRouter = Router();
 
 teacherRouter.use(authenticate);
 teacherRouter.use(authorize(UserRole.TEACHER));
+
+teacherRouter.get('/timetable', TeacherController.getTimetable);
+
 teacherRouter.get('/groups', TeacherController.getGroups);
 teacherRouter.get('/groups/:id/subjects', validate(idSchema, 'params'), TeacherController.getSubjects);
 

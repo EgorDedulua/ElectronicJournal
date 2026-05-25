@@ -115,7 +115,7 @@ export class AdminController {
 
     public static async getTimetables(req: Request, res: Response) {
         const groupId = Number(req.query.id);
-        const result = await TimetableService.getTimetables(req.user!, groupId);
+        const result = await TimetableService.getGroupTimetable(req.user!, groupId);
         res.status(200).json(result);
     }
 

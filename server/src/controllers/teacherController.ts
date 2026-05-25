@@ -2,9 +2,15 @@ import { LateDTO } from '@/dto/lateDTO';
 import { LessonDTO } from '@/dto/lessonDTO';
 import { MarkDTO } from '@/dto/markDTO';
 import { TeacherService } from '@/services/teacherService';
+import { TimetableService } from '@/services/timetableService';
 import { Request, Response } from 'express';
 
 export class TeacherController {
+    public static async getTimetable(req: Request, res: Response) {
+        const result = await TimetableService.getTeacherTimetable(req.user!.id);
+        res.status(200).json(result);
+    }
+    
     public static async getGroups(req: Request, res: Response) {
         const result = await TeacherService.getGroups(req.user!.id);
         res.status(200).json(result);

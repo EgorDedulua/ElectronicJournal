@@ -10,6 +10,7 @@ const studentRouter = Router();
 
 studentRouter.use(authenticate);
 studentRouter.use(authorize(UserRole.STUDENT));
+studentRouter.get('/timetable/:id', validate(idSchema, 'params'), StudentController.getTimetable);
 studentRouter.get('/subjects', StudentController.getSubjects);
 studentRouter.get('/subjects/:id/lessons', validate(idSchema, 'params'), StudentController.getLessons);
 studentRouter.get('/subjects/:id/marks', validate(idSchema, 'params') ,StudentController.getMarks);

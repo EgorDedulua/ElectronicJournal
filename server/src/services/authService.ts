@@ -28,7 +28,9 @@ export class AuthService {
 
         return {
             token: token,
-            data: { id: user.id, fullName: user.fullName, role: user.role, groupName: user.group?.name, isExpelled: user.isExpelled }
+            data: { id: user.id, fullName: user.fullName, role: user.role, groupName: user.group?.name, isExpelled: user.isExpelled,
+                groupId: user.groupId
+             }
         };
     }
 }

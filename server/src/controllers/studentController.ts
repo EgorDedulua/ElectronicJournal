@@ -1,7 +1,14 @@
 import { StudentService } from '@/services/studentService';
+import { TimetableService } from '@/services/timetableService';
 import { Request, Response } from 'express';
 
 export class StudentController {
+    public static async getTimetable(req: Request, res: Response) {
+        const groupId = Number(req.params.id);
+        const result = await TimetableService.getGroupTimetable(req.user!, groupId);
+        res.status(200).json(result);
+    }
+
     public static async getSubjects(req: Request, res: Response) {
         const result = await StudentService.getSubjects(req.user!.id);
         res.status(200).json(result);
