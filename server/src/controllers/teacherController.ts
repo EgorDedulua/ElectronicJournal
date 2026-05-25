@@ -16,6 +16,12 @@ export class TeacherController {
         res.status(200).json(result);
     }
 
+    public static async getStudents(req: Request, res: Response) {
+        const groupId = Number(req.params.id);
+        const result = await TeacherService.getStudents(req.user!.id, groupId);
+        res.status(200).json(result);
+    }
+
     public static async getSubjects(req: Request, res: Response) {
         const groupId = Number(req.params.id);
         const result = await TeacherService.getSubjects(req.user!.id, groupId);

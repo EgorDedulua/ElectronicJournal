@@ -24,6 +24,8 @@ teacherRouter.get('/timetable', TeacherController.getTimetable);
 teacherRouter.get('/groups', TeacherController.getGroups);
 teacherRouter.get('/groups/:id/subjects', validate(idSchema, 'params'), TeacherController.getSubjects);
 
+teacherRouter.get('/groups/:id/students', validate(idSchema, 'params'), TeacherController.getStudents);
+
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/lessons', validate(groupAndSubjectIdSchema, 'params'), TeacherController.getLessons);
 teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons', validate(groupAndSubjectIdSchema, 'params')
     ,validate(lessonSchema), TeacherController.addLesson);

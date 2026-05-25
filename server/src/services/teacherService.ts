@@ -337,6 +337,15 @@ export class TeacherService {
         return { data: result };
     }
 
+    public static async getStudents (userId: number, groupId: number) {
+        await this.checkTeacherAndGroup(userId, groupId);
+
+        const group = await this.groupRepository.findOne({ where: { id: groupId }, relations: ['students']});
+        return {
+            data: group!.students
+        }
+    }
+
     public static async getSubjects(userId: number, groupId: number) {
         const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['group'] });
         if (!user) {
@@ -553,6 +562,18 @@ export class TeacherService {
             throw new AppError(`Студент с id ${studentId} отчислен`, 400);
         }
     }
+
+    private static async checkTeacherAndGroup (teacherId: number, groupId: number) {
+        const user = await this.userRepository.findOne({ where: { id: teacherId, role: UserRole.TEACHER }, relations: ['group'] });
+        if (!user) {
+            throw new AppError(`Не найден пользователь с id ${teacherId}`, 404);
+        }
+
+        const course = await this.courseRepository.findOneBy({ teacherId: teacherId, groupId: groupId });
+        if (!course) {
+            throw new AppError(`Преподаватель с id ${teacherId} не имеет доступа к группе с id ${groupId}`, 403);
+        }
+    } 
 
     private static async checkTeacherAndCourse(teacherId: number, groupId: number, subjectId: number) {
         const user = await this.userRepository.findOne({ where: { id: teacherId, role: UserRole.TEACHER }, relations: ['group'] });
