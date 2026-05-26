@@ -1,0 +1,46 @@
+import {
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToOne,
+    PrimaryGeneratedColumn
+} from 'typeorm';
+import { Work } from './work';
+import { User } from './user';
+
+@Entity('work_comments')
+export class WorkComment {
+    @PrimaryGeneratedColumn('increment')
+    id!: number;
+
+    @ManyToOne(() => Work, (work) => work.comments, { nullable: true, onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'work_id' })
+    work!: Work;
+
+    @Column({ name: 'work_id' })
+    workId!: number;
+
+    @Column()
+    createdAt!: Date;
+
+    @Column()
+    updatedAt?: Date;
+
+    @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'author_id' })
+    author!: User;
+
+    @Column({ name: 'author_id' })
+    authorId!: number;
+
+    @OneToOne(() => WorkComment, { nullable: true, onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'parent_id' })
+    parent?: WorkComment;
+
+    @Column({ name: 'parent_id' })
+    parentId?: number;
+
+    @Column()
+    text!: string;
+}
