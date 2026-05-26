@@ -5,7 +5,9 @@ import { Group } from "@/entities/group";
 import { LessonTimings } from "@/entities/lessonTimings";
 import { Timetable } from "@/entities/timetable";
 import { AppError } from "@/utils/appError";
+import { JwtPayload } from "@/middlewares/authMiddleware";
 import { In, Not } from "typeorm";
+import { User, UserRole } from "@/entities/user";
 
 
 export class TimetableService {
@@ -13,15 +15,76 @@ export class TimetableService {
     private static lessonTimingsRepository = AppDataSource.getRepository(LessonTimings);
     private static courseRepository = AppDataSource.getRepository(Course);
     private static groupRepository = AppDataSource.getRepository(Group);
+    private static userRepository = AppDataSource.getRepository(User);
 
-    public static async getTimetables(groupId: number) {
+    public static async getGroupTimetable(userInfo: JwtPayload, groupId: number) {
         const group = this.groupRepository.findOneBy({ id: groupId });
         if (!group) {
             throw new AppError(`Не найдена группа с id ${groupId}`, 404);
         } 
+        
+
+        if (userInfo.role !== 'admin') {
+            const user = await this.userRepository.findOneBy({ id: userInfo.id });
+            if (!user) {
+                throw new AppError(`Не найден пользователь с id ${userInfo.id}`, 404);
+            }
+
+            if (user.role === UserRole.STUDENT) {
+                if (user.groupId != groupId) {
+                    throw new AppError(`Студент с id ${user.id} не учится в группе с id ${groupId}`, 403);
+                }
+            }
+        }
 
         const timetables = await this.timetableRepository.find({ 
             where: { groupId },
+            relations: {
+                course: {
+                    subject: true,
+                    teacher: true
+                },
+                lessonTimings: true
+            },
+            order: {
+                dayOfWeek: 'ASC',
+                lessonTimings: { lessonNumber: 'ASC' }
+            }
+        });
+
+        const grouped: Record<number, any[]> = {};
+        for (const t of timetables) {
+            const day = t.dayOfWeek;
+            if (!grouped[day]) grouped[day] = [];
+
+                grouped[day].push({
+                    id: t.id,
+                    courseId: t.courseId,
+                    subjectName: t.course.subject.name,
+                    teacherName: t.course.teacher.fullName,
+                    room: t.room,
+                    lessonNumber: t.lessonTimings.lessonNumber,
+                    startTime: t.lessonTimings.startTime,    
+                    endTime: t.lessonTimings.endTime,
+                });
+        }
+
+        const data = Object.entries(grouped).map(([dayStr, lessons]) => ({
+            dayOfWeek: Number(dayStr), 
+            lessons,
+        }));
+
+        return { data: data };
+    }
+
+    public static async getTeacherTimetable(teacherId: number) {
+        const user = await this.userRepository.findOneBy({ id: teacherId, role: UserRole.TEACHER });
+        if (!user) {
+            throw new AppError(`Не найден преподаватель с id ${teacherId}`, 404);
+        }
+
+        const timetables = await this.timetableRepository.find({ 
+            where: { teacherId: user.id },
             relations: {
                 course: {
                     subject: true,

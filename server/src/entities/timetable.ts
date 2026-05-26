@@ -16,8 +16,7 @@ export enum DayOfWeek {
     WEDNESDAY = 3,
     THURSDAY = 4,
     FRIDAY = 5,
-    SATURDAY = 6,
-    SUNDAY = 7,
+    SATURDAY = 6
 };
 
 @Entity('timetables')

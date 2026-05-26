@@ -36,4 +36,7 @@ export class User {
 
     @Column({ name: 'group_id' })
     groupId?: number;
+
+    @Column()
+    isExpelled!: boolean;
 }

@@ -11,6 +11,7 @@ import { UsersQueryDTO } from "@/dto/queries/usersQueryDTO";
 import { Brackets, } from "typeorm";
 import { SubjectsQueryDTO } from "@/dto/queries/subjectsQueryDTO";
 import { GroupsQueryDTO } from "@/dto/queries/groupsQueryDTO";
+import { UpdateUserDTO } from "@/dto/updateUserDTO";
 
 export class AdminService {
     private static userRepository = AppDataSource.getRepository(User);
@@ -96,7 +97,8 @@ export class AdminService {
         });
 
         return {
-            data: { id: newUser.id, fullName: newUser.fullName, role: newUser.role, login: newUser.login, groupName: savedUser!.group?.name, groupId: newUser.groupId }
+            data: { id: newUser.id, fullName: newUser.fullName, role: newUser.role, login: newUser.login, groupName: savedUser!.group?.name
+                , groupId: newUser.groupId, isExpelled: newUser.isExpelled }
         };
     }
 
@@ -109,13 +111,13 @@ export class AdminService {
         await this.userRepository.delete({ id: userId });
     }
 
-    public static async updateUser(userId: number, dto: RegisterDTO) {
+    public static async updateUser(userId: number, dto: UpdateUserDTO) {
         const existing = await this.userRepository.findOneBy({ id: userId });
         if (!existing) {
             throw new AppError(`Не найден пользователь с id ${userId}`, 404);
         }
 
-        if (dto.login !== existing.login && await this.userRepository.findOneBy({ login: dto.login })) {
+        if (dto.login && dto.login !== existing.login && await this.userRepository.findOneBy({ login: dto.login })) {
             throw new AppError(`Логин ${dto.login} уже занят`, 409);
         }
 
@@ -131,10 +133,18 @@ export class AdminService {
             existing.passwordHash = passwordHash;
         }
 
-        existing.fullName = dto.fullName;
-        existing.groupId = dto.groupId;
-        existing.login = dto.login;
+        if (dto.isExpelled === true) {
+            if (existing.role !== UserRole.STUDENT) {
+                throw new AppError('Отчислить можно только студента', 400);
+            }
+        }
+
+        existing.fullName = dto.fullName ?? existing.fullName;
+        existing.groupId = dto.groupId ?? existing.groupId;
+        existing.login = dto.login ?? existing.login;
         existing.role = dto.role as UserRole;
+        existing.isExpelled = dto.isExpelled ?? existing.isExpelled;
+
         await this.userRepository.save(existing);
 
         const savedUser = await this.userRepository.findOne({
@@ -143,7 +153,8 @@ export class AdminService {
         });
 
         return {
-            data: { id: existing.id, fullName: existing.fullName, login: existing.login, role: existing.role, groupName: savedUser!.group?.name, groupId: existing.groupId }
+            data: { id: existing.id, fullName: existing.fullName, login: existing.login, role: existing.role, groupName: savedUser!.group?.name
+                , groupId: existing.groupId, isExelled: existing.isExpelled }
         };
     }
 
@@ -306,7 +317,7 @@ export class AdminService {
         await this.groupRepository.save(existing);
 
         return {
-            data: {id: existing.id, name: existing.name }
+            data: { id: existing.id, name: existing.name }
         };
     }
 }

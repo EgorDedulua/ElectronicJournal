@@ -11,7 +11,7 @@ export const validate = (
         const { error, value } = schema.validate(req[target], {
             abortEarly: false,
             stripUnknown: false,
-            allowUnknown: target === 'query' 
+            allowUnknown: true 
         });
 
         if (error) {
