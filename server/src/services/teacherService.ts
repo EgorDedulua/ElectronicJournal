@@ -42,7 +42,7 @@ export class TeacherService {
             throw new AppError(`У группы с id ${groupId} ${dateOnly} уже было 8 уроков`, 422);
         }
 
-        const newLesson = await this.lessonRepository.create({
+        const newLesson = this.lessonRepository.create({
             course: course,
             date: dateOnly,
             topic: dto.topic,
@@ -78,7 +78,7 @@ export class TeacherService {
                 throw new AppError(`У студента с id ${dto.studentId} уже есть отметка по уроку с id ${lessonId}`, 400);
             }
             
-            const newMark = await markRepo.create({
+            const newMark = markRepo.create({
                 lessonId: lessonId,
                 mark: dto.mark,
                 studentId: dto.studentId,
@@ -89,7 +89,7 @@ export class TeacherService {
             if ((lesson.type === LessonType.LAB || lesson.type === LessonType.PRACTICE) && dto.mark > 3
                 && !await creditRepo.findOne({ where: { lessonId: lessonId, studentId: dto.studentId }})) {
 
-                newCredit = await creditRepo.create({
+                newCredit = creditRepo.create({
                     studentId: dto.studentId,
                     lessonId: lessonId
                 });
@@ -156,7 +156,7 @@ export class TeacherService {
             if (lesson.type === LessonType.LAB || lesson.type === LessonType.PRACTICE) {
                 if (mark.mark > 3 && !await creditRepo.findOne({ where: { lessonId: lessonId, studentId: mark.studentId }})) {
                     
-                    newCredit = await creditRepo.create({
+                    newCredit = creditRepo.create({
                         studentId: mark.studentId,
                         lessonId: lessonId
                     });
@@ -197,13 +197,13 @@ export class TeacherService {
         if (!dto.minutes) {
             const minutes = await this.calculateLateMinutes(groupId, lesson);
 
-            newLate = await this.lateRepository.create({
+            newLate = this.lateRepository.create({
                 lessonId: lessonId,
                 minutes: minutes,
                 studentId: dto.studentId
             });
         } else {
-            newLate = await this.lateRepository.create({
+            newLate = this.lateRepository.create({
                 lessonId: lessonId,
                 minutes: dto.minutes,
                 studentId: dto.studentId
@@ -265,7 +265,7 @@ export class TeacherService {
             throw new AppError(`У студента с id ${studentId} уже есть отсутствие на уроке с id ${lessonId}`, 400);
         }
 
-        const newAbsence = await this.absenceRepository.create({
+        const newAbsence = this.absenceRepository.create({
             lessonId: lessonId,
             studentId: studentId
         });
@@ -303,7 +303,7 @@ export class TeacherService {
             throw new AppError(`У студента с id ${studentId} уже есть зачет на уроке с id ${lessonId}`, 400);
         }
 
-        const newCredit = await this.creditRepository.create({
+        const newCredit = this.creditRepository.create({
             lessonId: lessonId,
             studentId: studentId
         });

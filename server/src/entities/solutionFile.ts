@@ -1,5 +1,6 @@
 import {
     Column,
+    CreateDateColumn,
     Entity,
     JoinColumn,
     ManyToOne,
@@ -19,12 +20,12 @@ export class SolutionFile {
     storedName!: string;
 
     @Column()
-    mimeType!: string;
+    mimetype!: string;
 
     @Column()
     size!: number;
 
-    @Column()
+    @CreateDateColumn()
     uploadedAt!: Date;
 
     @ManyToOne(() => Solution, (solution) => solution.files, { nullable: false, onDelete: 'CASCADE' })

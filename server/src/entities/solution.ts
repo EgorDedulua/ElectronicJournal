@@ -1,11 +1,13 @@
 import {
     Column,
+    CreateDateColumn,
     Entity,
     JoinColumn,
     ManyToOne,
     OneToMany,
     OneToOne,
-    PrimaryGeneratedColumn
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
 } from 'typeorm';
 import { Work } from './work';
 import { User } from './user';
@@ -24,11 +26,11 @@ export class Solution {
     @Column({ name: 'work_id' })
     workId!: number;
 
-    @Column()
-    uploadedAt!: Date;
+    @CreateDateColumn()
+    createdAt!: Date;
 
-    @Column()
-    updateddAt?: Date;
+    @UpdateDateColumn()
+    updatedAt?: Date;
 
     @OneToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'student_id' })
@@ -38,8 +40,8 @@ export class Solution {
     studentId!: number;
 
     @OneToMany(() => SolutionFile, (file) => file.solution, { onDelete: 'CASCADE' })
-    files?: SolutionFile[];
+    files!: SolutionFile[];
 
     @OneToMany(() => SolutionComment, (comment) => comment.solution, { onDelete: 'CASCADE' })
-    comments?: SolutionComment[];
+    comments!: SolutionComment[];
 }

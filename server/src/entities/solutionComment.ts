@@ -1,10 +1,12 @@
 import {
     Column,
+    CreateDateColumn,
     Entity,
     JoinColumn,
     ManyToOne,
     OneToOne,
-    PrimaryGeneratedColumn
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
 } from 'typeorm';
 import { Work } from './work';
 import { User } from './user';
@@ -22,10 +24,10 @@ export class SolutionComment {
     @Column({ name: 'solution_id' })
     solutionId!: number;
 
-    @Column()
+    @CreateDateColumn()
     createdAt!: Date;
 
-    @Column()
+    @UpdateDateColumn()
     updatedAt?: Date;
 
     @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })

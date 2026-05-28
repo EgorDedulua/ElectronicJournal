@@ -1,10 +1,12 @@
 import {
     Column,
+    CreateDateColumn,
     Entity,
     JoinColumn,
     OneToMany,
     OneToOne,
-    PrimaryGeneratedColumn
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
 } from 'typeorm';
 import { Lesson } from './lesson';
 import { WorkFile } from './workFile';
@@ -32,18 +34,18 @@ export class Work {
     @Column()
     deadline?: Date;
 
-    @Column()
+    @CreateDateColumn()
     createdAt!: Date;
 
-    @Column()
+    @UpdateDateColumn()
     updatedAt?: Date;
 
     @OneToMany(() => WorkFile, (file) => file.work, { onDelete: 'CASCADE' })
-    files?: WorkFile[];
+    files!: WorkFile[];
 
     @OneToMany(() => Solution, (solution) => solution.work, { onDelete: 'CASCADE' })
-    solutions?: Solution[];
+    solutions!: Solution[];
 
     @OneToMany(() => WorkComment, (comment) => comment.work, { onDelete: 'CASCADE' })
-    comments?: WorkComment[];
+    comments!: WorkComment[];
 }
