@@ -3,19 +3,20 @@ import { UserRole } from '@/entities/user';
 import { authenticate } from '@/middlewares/authMiddleware';
 import { authorize } from '@/middlewares/authorizeMiddleware';
 import { validate } from '@/middlewares/validationMiddleware';
-import { idSchema } from '@/validation/common/idSchema';
+import { paramsSchema } from '@/validation/common/paramsSchema';
 import { Router } from 'express';
 
 const studentRouter = Router();
 
 studentRouter.use(authenticate);
 studentRouter.use(authorize(UserRole.STUDENT));
-studentRouter.get('/timetable/:id', validate(idSchema, 'params'), StudentController.getTimetable);
+studentRouter.get('/timetable/:groupId', validate(paramsSchema, 'params') , StudentController.getTimetable);
 studentRouter.get('/subjects', StudentController.getSubjects);
-studentRouter.get('/subjects/:id/lessons', validate(idSchema, 'params'), StudentController.getLessons);
-studentRouter.get('/subjects/:id/marks', validate(idSchema, 'params') ,StudentController.getMarks);
-studentRouter.get('/subjects/:id/absences', validate(idSchema, 'params'), StudentController.getAbsences);
-studentRouter.get('/subjects/:id/lates', validate(idSchema, 'params'), StudentController.getLates);
-studentRouter.get('/subjects/:id/credits', validate(idSchema, 'params'), StudentController.getCredits);
+studentRouter.get('/subjects/:subjectId/lessons', validate(paramsSchema, 'params') , StudentController.getLessons);
+studentRouter.get('/subjects/:subjectId/lessons/:lessonId/works/:workId', validate(paramsSchema, 'params'), StudentController.getWork);
+studentRouter.get('/subjects/:subjectId/marks', validate(paramsSchema, 'params') ,StudentController.getMarks);
+studentRouter.get('/subjects/:subjectId/absences', validate(paramsSchema, 'params') , StudentController.getAbsences);
+studentRouter.get('/subjects/:subjectId/lates', validate(paramsSchema, 'params') , StudentController.getLates);
+studentRouter.get('/subjects/:subjectId/credits', validate(paramsSchema, 'params') , StudentController.getCredits);
 
 export default studentRouter;

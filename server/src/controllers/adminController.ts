@@ -26,13 +26,13 @@ export class AdminController {
     }
 
     public static async deleteUser(req: Request, res: Response) {
-        const userId = Number(req.params.id);
+        const userId = Number(req.params.userId);
         await AdminService.deleteUser(userId);
         res.status(204).send();
     }
 
     public static async updateUser(req: Request, res: Response)  {
-        const userId = Number(req.params.id);
+        const userId = Number(req.params.userId);
         const dto: RegisterDTO = req.body;
         const result = await AdminService.updateUser(userId, dto);
         res.status(200).json(result);
@@ -51,13 +51,13 @@ export class AdminController {
     }
 
     public static async deleteSubject(req: Request, res: Response) {
-        const subjectId = Number(req.params.id);
+        const subjectId = Number(req.params.subjectId);
         await AdminService.deleteSubject(subjectId);
         res.status(204).send();
     }
 
     public static async updateSubject(req: Request, res: Response) {
-        const subjectId = Number(req.params.id);
+        const subjectId = Number(req.params.subjectId);
         const dto: SubjectDTO = req.body;
         const result = await AdminService.updateSubject(subjectId, dto);
         res.status(200).json(result);
@@ -76,13 +76,13 @@ export class AdminController {
     }
 
     public static async deleteGroup(req: Request, res: Response) {
-        const groupId = Number(req.params.id);
+        const groupId = Number(req.params.groupId);
         await AdminService.deleteGroup(groupId);
         res.status(204).send();
     }
 
     public static async updateGroup(req: Request, res: Response) {
-        const groupId = Number(req.params.id);
+        const groupId = Number(req.params.groupId);
         const dto: GroupDTO = req.body;
         const result = await AdminService.updateGroup(groupId, dto);
         res.status(200).json(result);
@@ -101,13 +101,13 @@ export class AdminController {
     }
 
     public static async deleteCourse(req: Request, res: Response) {
-        const courseId = Number(req.params.id);
+        const courseId = Number(req.params.courseId);
         await CourseService.deleteCourse(courseId);
         res.status(204).send();
     }
 
     public static async updateCourse(req: Request, res: Response) {
-        const courseId = Number(req.params.id);
+        const courseId = Number(req.params.courseId);
         const dto: CourseDTO = req.body;
         const result = await CourseService.updateCourse(courseId, dto);
         res.status(200).json(result);
@@ -126,14 +126,14 @@ export class AdminController {
     }
 
     public static async updateTimetable(req: Request, res: Response) {
-        const timetableId = Number(req.params.id);
+        const timetableId = Number(req.params.timetableId);
         const dto: TimetableDTO = req.body;
         const result = await TimetableService.updateTimetable(timetableId, dto);
         res.status(200).json(result);
     }
 
     public static async deleteTimetable(req: Request, res: Response) {
-        const timetableId = Number(req.params.id);
+        const timetableId = Number(req.params.timetableId);
         await TimetableService.deleteTimetable(timetableId);
         res.status(204).send();
     }

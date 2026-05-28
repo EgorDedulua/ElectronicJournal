@@ -1,8 +1,11 @@
 import { LateDTO } from '@/dto/lateDTO';
 import { LessonDTO } from '@/dto/lessonDTO';
 import { MarkDTO } from '@/dto/markDTO';
+import { UpdateWorkDTO } from '@/dto/updateWorkDTO';
+import { WorkDTO } from '@/dto/workDTO';
 import { TeacherService } from '@/services/teacherService';
 import { TimetableService } from '@/services/timetableService';
+import { WorkService } from '@/services/workService';
 import { Request, Response } from 'express';
 
 export class TeacherController {
@@ -17,13 +20,13 @@ export class TeacherController {
     }
 
     public static async getStudents(req: Request, res: Response) {
-        const groupId = Number(req.params.id);
+        const groupId = Number(req.params.groupId);
         const result = await TeacherService.getStudents(req.user!.id, groupId);
         res.status(200).json(result);
     }
 
     public static async getSubjects(req: Request, res: Response) {
-        const groupId = Number(req.params.id);
+        const groupId = Number(req.params.groupId);
         const result = await TeacherService.getSubjects(req.user!.id, groupId);
         res.status(200).json(result);
     }
@@ -33,6 +36,34 @@ export class TeacherController {
         const subjectId = Number(req.params.subjectId);
         const result = await TeacherService.getLessons(req.user!.id, groupId, subjectId);
         res.status(200).json(result);
+    }
+
+    public static async getWork(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId } = req.params;
+        const result = await WorkService.get(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(groupId));
+        res.status(200).json(result);
+    }
+
+    public static async addWork(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId } = req.params;
+        const dto: WorkDTO = req.body;
+        const files = req.files as Express.Multer.File[] | undefined;
+        const result = await WorkService.create(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), dto, files);
+        res.status(200).json(result);
+    }
+
+    public static async updateWork(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId } = req.params;
+        const dto: UpdateWorkDTO = req.body;
+        const files = req.files as Express.Multer.File[];
+        const result = await WorkService.update(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(workId), dto, files);
+        res.status(200).json(result);
+    }
+
+    public static async deleteWork(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId } = req.params;
+        await WorkService.delete(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(workId));
+        res.status(204).send();
     }
 
     public static async addLesson(req: Request, res: Response) {
@@ -64,16 +95,16 @@ export class TeacherController {
     }
 
     public static async deleteMark(req: Request, res: Response) {
-        const { groupId, subjectId, lessonId, id } = req.params;
-        await TeacherService.deleteMark(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(id));
+        const { groupId, subjectId, lessonId, markId } = req.params;
+        await TeacherService.deleteMark(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(markId));
         res.status(204).send();
     }
 
     public static async updateMark(req: Request, res: Response) {
-        const { groupId, subjectId, lessonId, id } = req.params;
+        const { groupId, subjectId, lessonId, markId } = req.params;
         const { mark } = req.body;
         const result = await TeacherService.updateMark(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId),
-            Number(id), mark);
+            Number(markId), mark);
         res.status(200).json(result);
     }
 
@@ -92,8 +123,8 @@ export class TeacherController {
     }
 
     public static async deleteAbsence(req: Request, res: Response) {
-        const { groupId, subjectId, lessonId, id } = req.params;
-        await TeacherService.deleteAbsence(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(id));
+        const { groupId, subjectId, lessonId, absenceId } = req.params;
+        await TeacherService.deleteAbsence(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(absenceId));
         res.status(204).send();
     }
 
@@ -112,16 +143,16 @@ export class TeacherController {
     }
 
     public static async deleteLate(req: Request, res: Response) {
-        const { groupId, subjectId, lessonId, id } = req.params;
-        await TeacherService.deleteLate(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(id));
+        const { groupId, subjectId, lessonId, lateId } = req.params;
+        await TeacherService.deleteLate(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(lateId));
         res.status(204).send();
     }
 
     public static async updateLate(req: Request, res: Response) {
-        const { groupId, subjectId, lessonId, id } = req.params;
+        const { groupId, subjectId, lessonId, lateId } = req.params;
         const { minutes } = req.body;
         const result = await TeacherService.updateLate(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), 
-            Number(id), minutes);
+            Number(lateId), minutes);
         res.status(200).json(result);
     }
 
@@ -140,8 +171,8 @@ export class TeacherController {
     }
 
     public static async deleteCredit(req: Request, res: Response) {
-        const { groupId, subjectId, lessonId, id } = req.params;
-        await TeacherService.deleteCredit(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(id));
+        const { groupId, subjectId, lessonId, creditId } = req.params;
+        await TeacherService.deleteCredit(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(creditId));
         res.status(204).send();
     }
 }
