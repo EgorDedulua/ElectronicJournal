@@ -88,7 +88,8 @@ export class TimetableService {
             relations: {
                 course: {
                     subject: true,
-                    teacher: true
+                    teacher: true,
+                    group: true,
                 },
                 lessonTimings: true
             },
@@ -112,6 +113,7 @@ export class TimetableService {
                     lessonNumber: t.lessonTimings.lessonNumber,
                     startTime: t.lessonTimings.startTime,    
                     endTime: t.lessonTimings.endTime,
+                    groupName: t.course.group.name
                 });
         }
 
