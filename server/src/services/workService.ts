@@ -224,9 +224,7 @@ export class WorkService {
             lessonId: work.lessonId,
             createdAt: work.createdAt,
             updatedAt: work.updatedAt,
-            ...(files ? { files: files } : {}),
-            ...(comments ? { comments: comments } : {}),
-            ...(solutions ? { solutions: solutions } : {})
+            files: files
         };
 
         return data;
