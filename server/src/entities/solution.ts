@@ -29,7 +29,7 @@ export class Solution {
     @CreateDateColumn()
     createdAt!: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ nullable: true })
     updatedAt?: Date;
 
     @OneToOne(() => User, { nullable: false, onDelete: 'CASCADE' })

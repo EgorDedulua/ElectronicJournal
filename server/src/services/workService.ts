@@ -60,6 +60,10 @@ export class WorkService {
     }
 
     public static async get(userId: number, subjectId: number, lessonId: number, workId: number, groupId?: number | null) {
+        if (!groupId) {
+            throw new AppError('Id группы не задан', 400);
+        }
+
         const user = await this.userRepository.findOneBy({ id: userId });
         if (!user) {
             throw new AppError(`Не найден пользователь с id ${userId}`, 404);
@@ -73,10 +77,6 @@ export class WorkService {
             if (!groupId || user.groupId !== groupId) {
                 throw new AppError(`У студента с id ${user.id} нет доступа к группе с id ${groupId}`, 403);
             }
-        }
-
-        if (!groupId) {
-            throw new AppError('Id группы не задан', 400);
         }
 
         const course = await this.courseRepository.findOneBy({ subjectId: subjectId, groupId: groupId });

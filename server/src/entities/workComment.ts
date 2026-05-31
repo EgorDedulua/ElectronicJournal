@@ -26,7 +26,7 @@ export class WorkComment {
     @CreateDateColumn()
     createdAt!: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ nullable: true })
     updatedAt?: Date;
 
     @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })

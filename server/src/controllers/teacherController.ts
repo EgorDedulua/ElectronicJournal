@@ -1,10 +1,13 @@
+import { CommentDTO } from '@/dto/commentDTO';
 import { LateDTO } from '@/dto/lateDTO';
 import { LessonDTO } from '@/dto/lessonDTO';
 import { MarkDTO } from '@/dto/markDTO';
+import { CommentsQueryDTO } from '@/dto/queries/commentsQueryDTO';
 import { UpdateWorkDTO } from '@/dto/updateWorkDTO';
 import { WorkDTO } from '@/dto/workDTO';
 import { TeacherService } from '@/services/teacherService';
 import { TimetableService } from '@/services/timetableService';
+import { WorkCommentsService } from '@/services/workCommentsService';
 import { WorkService } from '@/services/workService';
 import { Request, Response } from 'express';
 
@@ -42,6 +45,33 @@ export class TeacherController {
         const { subjectId, groupId, lessonId, workId } = req.params;
         const result = await WorkService.get(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(groupId));
         res.status(200).json(result);
+    }
+
+    public static async getWorkComments(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId } = req.params;
+        const dto: CommentsQueryDTO = req.query;
+        const result = await WorkCommentsService.get(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), dto, Number(groupId));
+        res.status(200).json(result);
+    }
+
+    public static async createWorkComment(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId } = req.params;
+        const dto: CommentDTO = req.body;
+        const result = await WorkCommentsService.create(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), dto, Number(groupId));
+        res.status(200).json(result);
+    }
+
+    public static async updateWorkComment(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId, commentId } = req.params;
+        const { text } = req.body;
+        const result = await WorkCommentsService.update(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(commentId), text, Number(groupId));
+        res.status(200).json(result);
+    }
+
+    public static async deleteWorkComment(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId, commentId } = req.params;
+        await WorkCommentsService.delete(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(commentId), Number(groupId));
+        res.status(204).send();
     }
 
     public static async addWork(req: Request, res: Response) {

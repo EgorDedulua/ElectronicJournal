@@ -15,8 +15,12 @@ export class WorkCommentsService {
     private static lessonRepository = AppDataSource.getRepository(Lesson);
     private static commentRepository = AppDataSource.getRepository(WorkComment);
 
-    public static async get(userId: number, subjectId: number, groupId: number, lessonId: number, workId: number, dto: CommentsQueryDTO) {
-        const { course} = await this.checkUserAndCourse(userId, groupId, subjectId);
+    public static async get(userId: number, subjectId: number, lessonId: number, workId: number, dto: CommentsQueryDTO, groupId?: number | null | undefined) {
+        if (!groupId) {
+            throw new AppError('Id группы не задан', 400);
+        }
+
+        const { course } = await this.checkUserAndCourse(userId, groupId, subjectId);
         const lesson = await this.checkLesson(lessonId);
         this.checkLessonCourse(lesson, course);
 
@@ -30,10 +34,10 @@ export class WorkCommentsService {
             relations: ['author', 'parent', 'parent.author'],
             order: { createdAt: 'ASC' },
             skip: dto.offset,
-            take: dto.limit + 1
+            take: dto.limit! + 1
         });
 
-        const hasMore = comments.length > dto.limit;
+        const hasMore = comments.length > dto.limit!;
         const items = hasMore ? comments.slice(0, dto.limit) : comments;
 
         const data = items.map(comment =>({
@@ -60,11 +64,15 @@ export class WorkCommentsService {
         return {
             data,
             hasMore,
-            nextOffset: dto.offset + items.length
+            nextOffset: dto.offset! + items.length
         };
     }
 
-    public static async create(userId: number, subjectId: number, groupId: number, lessonId: number, workId: number, dto: CommentDTO) {
+    public static async create(userId: number, subjectId: number, lessonId: number, workId: number, dto: CommentDTO, groupId?: number | null | undefined) {
+        if (!groupId) {
+            throw new AppError('Id группы не задан', 400);
+        }
+
         const { course } = await this.checkUserAndCourse(userId, groupId, subjectId);
         const lesson = await this.checkLesson(lessonId);
         this.checkLessonCourse(lesson, course);
@@ -117,7 +125,11 @@ export class WorkCommentsService {
         }
     }
 
-    public static async update(userId: number, subjectId: number, groupId: number, lessonId: number, workId: number, commentId: number, text: string) {
+    public static async update(userId: number, subjectId: number, lessonId: number, workId: number, commentId: number, text: string, groupId: number | null | undefined) {
+        if (!groupId) {
+            throw new AppError('Id группы не задан', 400);
+        }
+        
         const { course } = await this.checkUserAndCourse(userId, groupId, subjectId);
         const lesson = await this.checkLesson(lessonId);
         this.checkLessonCourse(lesson, course);
@@ -168,7 +180,11 @@ export class WorkCommentsService {
         }
     }
 
-    public static async delete(userId: number, subjectId: number, groupId: number, lessonId: number, workId: number, commentId: number) {
+    public static async delete(userId: number, subjectId: number, lessonId: number, workId: number, commentId: number, groupId?: number | null | undefined) {
+        if (!groupId) {
+            throw new AppError('Id группы не задан', 400);
+        }
+
         const { course } = await this.checkUserAndCourse(userId, groupId, subjectId);
         const lesson = await this.checkLesson(lessonId);
         this.checkLessonCourse(lesson, course);
@@ -187,7 +203,7 @@ export class WorkCommentsService {
             throw new AppError('Нельзя удалить чужой комментарий', 403)
         }
 
-        await this.commentRepository.delete(commentToDelete);
+        await this.commentRepository.delete({ id: commentId });
     }
 
     private static async checkUserAndCourse(userId: number, groupId: number, subjectId: number) {

@@ -27,7 +27,7 @@ export class SolutionComment {
     @CreateDateColumn()
     createdAt!: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ nullable: true })
     updatedAt?: Date;
 
     @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
@@ -37,7 +37,7 @@ export class SolutionComment {
     @Column({ name: 'author_id' })
     authorId!: number;
 
-    @OneToOne(() => SolutionComment, { nullable: true, onDelete: 'CASCADE' })
+    @OneToOne(() => SolutionComment, { nullable: true, onDelete: 'SET NULL' })
     @JoinColumn({ name: 'parent_id' })
     parent?: SolutionComment;
 
