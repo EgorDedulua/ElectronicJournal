@@ -1,5 +1,7 @@
 import { CommentDTO } from '@/dto/commentDTO';
 import { CommentsQueryDTO } from '@/dto/queries/commentsQueryDTO';
+import { UserRole } from '@/entities/user';
+import { SolutionService } from '@/services/solutionService';
 import { StudentService } from '@/services/studentService';
 import { TimetableService } from '@/services/timetableService';
 import { WorkCommentsService } from '@/services/workCommentsService';
@@ -26,7 +28,7 @@ export class StudentController {
 
     public static async getWork(req: Request, res: Response) {
         const { subjectId, lessonId, workId } = req.params;
-        const result = await WorkService.get(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), req.user!.groupId)
+        const result = await WorkService.get(req.user!.id, req.user!.role as UserRole, Number(subjectId), req.user!.groupId, Number(lessonId), Number(workId))
         res.status(200).json(result)
     }
 
@@ -49,6 +51,33 @@ export class StudentController {
         const { text } = req.body;
         const result = await WorkCommentsService.update(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(commentId), text, req.user!.groupId);
         res.status(200).json(result);
+    }
+
+    public static async getSolution(req: Request, res: Response) {
+        const { subjectId, lessonId, workId, solutionId } = req.params;
+        const result = await SolutionService.get(req.user!.id, req.user!.role as UserRole, Number(subjectId), req.user!.groupId, Number(lessonId), Number(workId), Number(solutionId));
+        res.status(200).json(result);
+    }
+
+    public static async createSolution(req: Request, res: Response) {
+        const { subjectId, lessonId, workId } = req.params;
+        const files = req.files as Express.Multer.File[] | undefined;
+        const result = await SolutionService.create(req.user!.id, Number(subjectId), req.user!.groupId, Number(lessonId), Number(workId), files);
+        res.status(200).json(result);
+    }
+
+    public static async updateSolution(req: Request, res: Response) {
+        const { subjectId, lessonId, workId, solutionId } = req.params;
+        const { deleteFileIds } = req.body;
+        const files = req.files as Express.Multer.File[] | undefined;
+        const result = await SolutionService.update(req.user!.id, Number(subjectId), req.user!.groupId, Number(lessonId), Number(workId), Number(solutionId), deleteFileIds, files);
+        res.status(200).json(result);
+    }
+
+    public static async deleteSolution(req: Request, res: Response) {
+        const { subjectId, lessonId, workId, solutionId } = req.params;
+        await SolutionService.delete(req.user!.id, Number(subjectId), req.user!.groupId, Number(lessonId), Number(workId), Number(solutionId));
+        res.status(204).send();
     }
 
     public static async deleteWorkComment(req: Request, res: Response) {

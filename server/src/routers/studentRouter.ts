@@ -2,11 +2,13 @@ import { StudentController } from '@/controllers/studentController';
 import { UserRole } from '@/entities/user';
 import { authenticate } from '@/middlewares/authMiddleware';
 import { authorize } from '@/middlewares/authorizeMiddleware';
+import { uploadSolutionFiles } from '@/middlewares/uploadMiddleware';
 import { validate } from '@/middlewares/validationMiddleware';
 import { commentsSchema } from '@/validation/commentSchema';
 import { paramsSchema } from '@/validation/common/paramsSchema';
 import { commentsQuerySchema } from '@/validation/queries/commentsQuerySchema';
 import { updateCommentSchema } from '@/validation/updateCommentsSchema';
+import { updateSolutionSchema } from '@/validation/updateSolutionSchema';
 import { Router } from 'express';
 
 const studentRouter = Router();
@@ -26,6 +28,15 @@ studentRouter.put('/subjects/:subjectId/lessons/:lessonId/works/:workId/comments
     ,validate(updateCommentSchema), StudentController.updateWorkComment);
 studentRouter.delete('/subjects/:subjectId/lessons/:lessonId/works/:workId/comments/:commentId', validate(paramsSchema, 'params')
     ,StudentController.deleteWorkComment);
+
+studentRouter.get('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId', validate(paramsSchema, 'params')
+    ,StudentController.getSolution);
+studentRouter.post('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions', validate(paramsSchema, 'params')
+    ,uploadSolutionFiles, StudentController.createSolution);
+studentRouter.put('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId', validate(paramsSchema, 'params'), uploadSolutionFiles
+    ,validate(updateSolutionSchema), StudentController.updateSolution);
+studentRouter.delete('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId', validate(paramsSchema, 'params')
+    ,StudentController.deleteSolution);
 
 studentRouter.get('/subjects/:subjectId/marks', validate(paramsSchema, 'params') ,StudentController.getMarks);
 studentRouter.get('/subjects/:subjectId/absences', validate(paramsSchema, 'params') , StudentController.getAbsences);

@@ -64,6 +64,9 @@ teacherRouter.put('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/
 teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/comments/:commentId',  validate(paramsSchema, 'params')
     ,TeacherController.deleteWorkComment);
 
+teacherRouter.get('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId', validate(paramsSchema, 'params')
+    ,TeacherController.getSolution);
+    
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/marks', validate(paramsSchema, 'params')
     ,TeacherController.getStudentsMarks);
 teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/marks', validate(paramsSchema, 'params')

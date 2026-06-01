@@ -5,6 +5,8 @@ import { MarkDTO } from '@/dto/markDTO';
 import { CommentsQueryDTO } from '@/dto/queries/commentsQueryDTO';
 import { UpdateWorkDTO } from '@/dto/updateWorkDTO';
 import { WorkDTO } from '@/dto/workDTO';
+import { UserRole } from '@/entities/user';
+import { SolutionService } from '@/services/solutionService';
 import { TeacherService } from '@/services/teacherService';
 import { TimetableService } from '@/services/timetableService';
 import { WorkCommentsService } from '@/services/workCommentsService';
@@ -43,7 +45,7 @@ export class TeacherController {
 
     public static async getWork(req: Request, res: Response) {
         const { subjectId, groupId, lessonId, workId } = req.params;
-        const result = await WorkService.get(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(groupId));
+        const result = await WorkService.get(req.user!.id, req.user!.role as UserRole, Number(subjectId), Number(groupId), Number(lessonId), Number(workId));
         res.status(200).json(result);
     }
 
@@ -94,6 +96,12 @@ export class TeacherController {
         const { subjectId, groupId, lessonId, workId } = req.params;
         await WorkService.delete(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(workId));
         res.status(204).send();
+    }
+
+    public static async getSolution(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId, solutionId } = req.params;
+        const result = await SolutionService.get(req.user!.id, req.user!.role as UserRole, Number(subjectId), Number(groupId), Number(lessonId), Number(workId), Number(solutionId));
+        res.status(200).json(result);
     }
 
     public static async addLesson(req: Request, res: Response) {
