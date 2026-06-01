@@ -40,26 +40,7 @@ export class WorkCommentsService {
         const hasMore = comments.length > dto.limit!;
         const items = hasMore ? comments.slice(0, dto.limit) : comments;
 
-        const data = items.map(comment =>({
-            id: comment.id,
-            text: comment.text,
-            author: {
-                id: comment.author.id,
-                fullName: comment.author.fullName,
-                role: comment.author.role,
-            },
-            parent: comment.parent ? {
-                id: comment.parent.id,
-                text: comment.parent.text,
-                author: {
-                    id: comment.parent.author.id,
-                    fullName: comment.parent.author.fullName,
-                    role: comment.parent.author.role
-                }
-            } : null,
-            createdAt: comment.createdAt,
-            updatedAt: comment.updatedAt
-        }));
+        const data = items.map(comment => this.formatComment(comment));
 
         return {
             data,
@@ -102,27 +83,7 @@ export class WorkCommentsService {
             relations: ['author', 'parent', 'parent.author']
         });
 
-        return {
-            data: {
-                id: comment!.id,
-                text: comment!.text,
-                author: {
-                    id: comment!.author.id,
-                    fullName: comment!.author.fullName,
-                    role: comment!.author.role,
-                },
-                parent: comment!.parent ? {
-                    id: comment!.parent.id,
-                    text: comment!.parent.text,
-                    author: {
-                        id: comment!.parent.author.id,
-                        fullName: comment!.parent.author.fullName,
-                        role: comment!.parent.author.role
-                    }
-                } : null,
-                createdAt: comment!.createdAt,
-            }
-        }
+        return { data: this.formatComment(comment!) };
     }
 
     public static async update(userId: number, subjectId: number, lessonId: number, workId: number, commentId: number, text: string, groupId: number | null | undefined) {
@@ -156,28 +117,7 @@ export class WorkCommentsService {
             relations: ['author', 'parent', 'parent.author']
         });
 
-        return {
-            data: {
-                id: comment!.id,
-                text: comment!.text,
-                author: {
-                    id: comment!.author.id,
-                    fullName: comment!.author.fullName,
-                    role: comment!.author.role,
-                },
-                parent: comment!.parent ? {
-                    id: comment!.parent.id,
-                    text: comment!.parent.text,
-                    author: {
-                        id: comment!.parent.author.id,
-                        fullName: comment!.parent.author.fullName,
-                        role: comment!.parent.author.role
-                    }
-                } : null,
-                createdAt: comment!.createdAt,
-                updatedAt: comment!.updatedAt
-            }
-        }
+        return { data: this.formatComment(comment!) };
     }
 
     public static async delete(userId: number, subjectId: number, lessonId: number, workId: number, commentId: number, groupId?: number | null | undefined) {
@@ -241,5 +181,28 @@ export class WorkCommentsService {
         if (lesson.courseId != course.id) {
             throw new AppError(`Урок с id ${lesson.id} не принадлежит курсу с id ${course.id}`, 400);
         }
+    }
+
+    private static formatComment(comment: WorkComment) {
+        return {
+                id: comment.id,
+                text: comment.text,
+                author: {
+                    id: comment.author.id,
+                    fullName: comment.author.fullName,
+                    role: comment.author.role,
+                },
+                parent: comment.parent ? {
+                    id: comment.parent.id,
+                    text: comment.parent.text,
+                    author: {
+                        id: comment.parent.author.id,
+                        fullName: comment.parent.author.fullName,
+                        role: comment.parent.author.role
+                    }
+                } : null,
+                createdAt: comment.createdAt,
+                updatedAt: comment.updatedAt
+        };
     }
 }

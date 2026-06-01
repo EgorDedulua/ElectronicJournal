@@ -17,8 +17,12 @@ studentRouter.use(authenticate);
 studentRouter.use(authorize(UserRole.STUDENT));
 studentRouter.get('/timetable/:groupId', validate(paramsSchema, 'params') , StudentController.getTimetable);
 studentRouter.get('/subjects', StudentController.getSubjects);
+
+
 studentRouter.get('/subjects/:subjectId/lessons', validate(paramsSchema, 'params') , StudentController.getLessons);
 studentRouter.get('/subjects/:subjectId/lessons/:lessonId/works/:workId', validate(paramsSchema, 'params'), StudentController.getWork);
+
+
 
 studentRouter.get('/subjects/:subjectId/lessons/:lessonId/works/:workId/comments', validate(paramsSchema, 'params')
     ,validate(commentsQuerySchema, 'query'), StudentController.getWorkComments);
@@ -29,6 +33,8 @@ studentRouter.put('/subjects/:subjectId/lessons/:lessonId/works/:workId/comments
 studentRouter.delete('/subjects/:subjectId/lessons/:lessonId/works/:workId/comments/:commentId', validate(paramsSchema, 'params')
     ,StudentController.deleteWorkComment);
 
+
+
 studentRouter.get('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId', validate(paramsSchema, 'params')
     ,StudentController.getSolution);
 studentRouter.post('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions', validate(paramsSchema, 'params')
@@ -37,6 +43,17 @@ studentRouter.put('/subjects/:subjectId/lessons/:lessonId/works/:workId/solution
     ,validate(updateSolutionSchema), StudentController.updateSolution);
 studentRouter.delete('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId', validate(paramsSchema, 'params')
     ,StudentController.deleteSolution);
+
+
+studentRouter.get('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments', validate(paramsSchema, 'params')
+    ,validate(commentsQuerySchema, 'query'), StudentController.getSolutionComments);
+studentRouter.post('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments', validate(paramsSchema, 'params')
+    ,validate(commentsSchema), StudentController.createSolutionComment);
+studentRouter.put('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments/:commentId', validate(paramsSchema, 'params')
+    ,validate(updateCommentSchema), StudentController.updateSolutionComment);
+studentRouter.delete('/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments/:commentId', validate(paramsSchema, 'params')
+    ,StudentController.deleteSolutionComment);
+
 
 studentRouter.get('/subjects/:subjectId/marks', validate(paramsSchema, 'params') ,StudentController.getMarks);
 studentRouter.get('/subjects/:subjectId/absences', validate(paramsSchema, 'params') , StudentController.getAbsences);

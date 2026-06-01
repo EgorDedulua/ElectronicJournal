@@ -1,6 +1,7 @@
 import { CommentDTO } from '@/dto/commentDTO';
 import { CommentsQueryDTO } from '@/dto/queries/commentsQueryDTO';
 import { UserRole } from '@/entities/user';
+import { SolutionCommentsService } from '@/services/solutionCommentsService';
 import { SolutionService } from '@/services/solutionService';
 import { StudentService } from '@/services/studentService';
 import { TimetableService } from '@/services/timetableService';
@@ -53,6 +54,43 @@ export class StudentController {
         res.status(200).json(result);
     }
 
+    public static async deleteWorkComment(req: Request, res: Response) {
+        const { subjectId, lessonId, workId, commentId } = req.params;
+        await WorkCommentsService.delete(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(commentId), req.user!.groupId);
+        res.status(204).send();
+    }
+
+    public static async getSolutionComments(req: Request, res: Response) {
+        const { subjectId, lessonId, workId, solutionId } = req.params;
+        const dto: CommentsQueryDTO = req.query;
+        const result = await SolutionCommentsService.get(req.user!.id, req.user!.role as UserRole, Number(subjectId), req.user!.groupId, Number(lessonId), 
+            Number(workId), Number(solutionId), dto);
+        res.status(200).json(result);
+    }
+
+    public static async createSolutionComment(req: Request, res: Response) {
+        const { subjectId, lessonId, workId, solutionId } = req.params;
+        const dto: CommentDTO = req.body;
+        const result = await SolutionCommentsService.create(req.user!.id, req.user!.role as UserRole, Number(subjectId), req.user!.groupId, Number(lessonId), 
+            Number(workId), Number(solutionId), dto);
+        res.status(200).json(result);
+    }
+
+    public static async updateSolutionComment(req: Request, res: Response) {
+        const { subjectId, lessonId, workId, solutionId, commentId } = req.params;
+        const { text } = req.body;
+        const result = await SolutionCommentsService.update(req.user!.id, req.user!.role as UserRole, Number(subjectId), req.user!.groupId, Number(lessonId), 
+            Number(workId), Number(solutionId), Number(commentId), text);
+        res.status(200).json(result);
+    }
+
+    public static async deleteSolutionComment(req: Request, res: Response) {
+        const { subjectId, lessonId, workId, solutionId, commentId } = req.params;
+        await SolutionCommentsService.delete(req.user!.id, req.user!.role as UserRole, Number(subjectId), req.user!.groupId, Number(lessonId), 
+            Number(workId), Number(solutionId), Number(commentId));
+        res.status(204).send();
+    }
+
     public static async getSolution(req: Request, res: Response) {
         const { subjectId, lessonId, workId, solutionId } = req.params;
         const result = await SolutionService.get(req.user!.id, req.user!.role as UserRole, Number(subjectId), req.user!.groupId, Number(lessonId), Number(workId), Number(solutionId));
@@ -77,12 +115,6 @@ export class StudentController {
     public static async deleteSolution(req: Request, res: Response) {
         const { subjectId, lessonId, workId, solutionId } = req.params;
         await SolutionService.delete(req.user!.id, Number(subjectId), req.user!.groupId, Number(lessonId), Number(workId), Number(solutionId));
-        res.status(204).send();
-    }
-
-    public static async deleteWorkComment(req: Request, res: Response) {
-        const { subjectId, lessonId, workId, commentId } = req.params;
-        await WorkCommentsService.delete(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(commentId), req.user!.groupId);
         res.status(204).send();
     }
 

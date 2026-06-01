@@ -66,7 +66,18 @@ teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/wor
 
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId', validate(paramsSchema, 'params')
     ,TeacherController.getSolution);
-    
+
+
+teacherRouter.get('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments', validate(paramsSchema, 'params')
+    ,validate(commentsQuerySchema, 'query'), TeacherController.getSolutionComments);
+teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments', validate(paramsSchema, 'params')
+    ,validate(commentsSchema), TeacherController.createSolutionComment);
+teacherRouter.put('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments/:commentId', validate(paramsSchema, 'params')
+    ,validate(updateCommentSchema), TeacherController.updateSolutionComment);
+teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments/:commentId', validate(paramsSchema, 'params')
+    ,TeacherController.deleteSolutionComment);
+
+
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/marks', validate(paramsSchema, 'params')
     ,TeacherController.getStudentsMarks);
 teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/marks', validate(paramsSchema, 'params')
