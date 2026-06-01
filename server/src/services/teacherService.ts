@@ -61,7 +61,7 @@ export class TeacherService {
         const lesson = await this.checkLesson(lessonId);
         this.checkLessonCourse(lesson, course);
 
-        await this.lessonRepository.delete(lesson);
+        await this.lessonRepository.delete({ id: lessonId });
     }
 
     public static async addMark(userId: number, subjectId: number, groupId: number, lessonId: number, dto: MarkDTO) {
@@ -437,13 +437,23 @@ export class TeacherService {
         const lessons = await this.lessonRepository
             .createQueryBuilder('lesson')
             .innerJoin('lesson.course', 'course')
+            .leftJoinAndSelect('lesson.work', 'work')
             .where('course.teacherId = :teacherId', { teacherId: userId })
             .andWhere('course.groupId = :groupId', { groupId: groupId })
             .andWhere('course.subjectId = :subjectId', { subjectId: subjectId })
             .orderBy('lesson.date', 'ASC')
             .getMany();
         
-        return { data: lessons };
+        const data = lessons.map(lesson => ({
+            id: lesson.id,
+            date: lesson.date,
+            topic: lesson.topic,
+            type: lesson.type,
+            courseId: lesson.courseId,
+            workId: lesson.work?.id ?? null
+        }));
+
+        return { data };
     }
 
     public static async getStudentsMarks(userId: number, groupId: number, subjectId: number) {

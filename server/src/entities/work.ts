@@ -37,7 +37,7 @@ export class Work {
     @CreateDateColumn()
     createdAt!: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ nullable: true })
     updatedAt?: Date;
 
     @OneToMany(() => WorkFile, (file) => file.work, { onDelete: 'CASCADE' })

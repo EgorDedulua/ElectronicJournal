@@ -7,6 +7,7 @@ import {
     PrimaryGeneratedColumn
 } from 'typeorm';
 import { Course } from './course';
+import { Work } from './work';
 
 export enum LessonType {
     USUAL = 'usual',
@@ -36,4 +37,7 @@ export class Lesson {
 
     @Column({ type: 'enum', enum: LessonType, default: LessonType.USUAL })
     type!: LessonType;
+
+    @OneToOne(() => Work, (work) => work.lesson, { nullable: true })
+    work?: Work | null
 }

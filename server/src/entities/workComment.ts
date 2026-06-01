@@ -16,7 +16,7 @@ export class WorkComment {
     @PrimaryGeneratedColumn('increment')
     id!: number;
 
-    @ManyToOne(() => Work, (work) => work.comments, { nullable: true, onDelete: 'CASCADE' })
+    @ManyToOne(() => Work, (work) => work.comments, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'work_id' })
     work!: Work;
 
@@ -26,7 +26,7 @@ export class WorkComment {
     @CreateDateColumn()
     createdAt!: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ nullable: true })
     updatedAt?: Date;
 
     @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
@@ -36,11 +36,11 @@ export class WorkComment {
     @Column({ name: 'author_id' })
     authorId!: number;
 
-    @OneToOne(() => WorkComment, { nullable: true, onDelete: 'CASCADE' })
+    @OneToOne(() => WorkComment, { nullable: true, onDelete: 'SET NULL' })
     @JoinColumn({ name: 'parent_id' })
     parent?: WorkComment;
 
-    @Column({ name: 'parent_id' })
+    @Column({ name: 'parent_id', nullable: true })
     parentId?: number;
 
     @Column()
