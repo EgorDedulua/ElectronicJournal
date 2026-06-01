@@ -30,7 +30,9 @@ export const uploadSolutionFiles = multer({
     storage: solutionStorage,
     limits: { fileSize: 10 *1024 * 1024 },
     fileFilter: (req, file, cb) => {
-        const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'application/zip'];
+        const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'application/zip', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ,'application/msword', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ];
         cb(null, allowed.includes(file.mimetype));
     }
 }).array('files', 10);

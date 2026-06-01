@@ -14,6 +14,9 @@ import { paramsSchema } from "@/validation/common/paramsSchema";
 import { workSchema } from "@/validation/workSchema";
 import { uploadWorkFiles } from "@/middlewares/uploadMiddleware";
 import { updateWorkSchema } from "@/validation/updateWorkSchema";
+import { commentsQuerySchema } from "@/validation/queries/commentsQuerySchema";
+import { commentsSchema } from "@/validation/commentSchema";
+import { updateCommentSchema } from "@/validation/updateCommentsSchema";
 
 const teacherRouter = Router();
 
@@ -22,16 +25,24 @@ teacherRouter.use(authorize(UserRole.TEACHER));
 
 teacherRouter.get('/timetable', TeacherController.getTimetable);
 
+
+
 teacherRouter.get('/groups', TeacherController.getGroups);
 teacherRouter.get('/groups/:groupId/subjects', validate(paramsSchema, 'params') , TeacherController.getSubjects);
 
+
+
 teacherRouter.get('/groups/:groupId/students', validate(paramsSchema, 'params') , TeacherController.getStudents);
+
+
 
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/lessons', validate(paramsSchema, 'params') , TeacherController.getLessons);
 teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons', validate(paramsSchema, 'params') 
     ,validate(lessonSchema), TeacherController.addLesson);
 teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId', validate(paramsSchema, 'params')
     ,TeacherController.deleteLesson);
+
+
 
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId', validate(paramsSchema, 'params')
     , TeacherController.getWork);
@@ -42,6 +53,31 @@ teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/wor
 teacherRouter.put('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId', validate(paramsSchema, 'params'), uploadWorkFiles
     ,validate(updateWorkSchema), TeacherController.updateWork);
 
+
+
+teacherRouter.get('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/comments', validate(paramsSchema, 'params')
+    ,validate(commentsQuerySchema, 'query'), TeacherController.getWorkComments);
+teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/comments',  validate(paramsSchema, 'params')
+    ,validate(commentsSchema), TeacherController.createWorkComment);
+teacherRouter.put('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/comments/:commentId',  validate(paramsSchema, 'params')
+    ,validate(updateCommentSchema), TeacherController.updateWorkComment);
+teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/comments/:commentId',  validate(paramsSchema, 'params')
+    ,TeacherController.deleteWorkComment);
+
+teacherRouter.get('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId', validate(paramsSchema, 'params')
+    ,TeacherController.getSolution);
+
+
+teacherRouter.get('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments', validate(paramsSchema, 'params')
+    ,validate(commentsQuerySchema, 'query'), TeacherController.getSolutionComments);
+teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments', validate(paramsSchema, 'params')
+    ,validate(commentsSchema), TeacherController.createSolutionComment);
+teacherRouter.put('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments/:commentId', validate(paramsSchema, 'params')
+    ,validate(updateCommentSchema), TeacherController.updateSolutionComment);
+teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/works/:workId/solutions/:solutionId/comments/:commentId', validate(paramsSchema, 'params')
+    ,TeacherController.deleteSolutionComment);
+
+
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/marks', validate(paramsSchema, 'params')
     ,TeacherController.getStudentsMarks);
 teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/marks', validate(paramsSchema, 'params')
@@ -51,11 +87,15 @@ teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/mar
 teacherRouter.patch('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/marks/:markId', validate(paramsSchema, 'params')
     ,validate(updateMarkSchema), TeacherController.updateMark);
 
+
+
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/absences', validate(paramsSchema, 'params'), TeacherController.getStudentsAbsences);
 teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/absences', validate(paramsSchema, 'params')
     ,validate(studentIdSchema), TeacherController.addAbsence);
 teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/absences/:absenceId', validate(paramsSchema, 'params')
     ,TeacherController.deleteAbsence);
+
+
 
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/lates', validate(paramsSchema, 'params'), TeacherController.getStudentsLates);
 teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/lates', validate(paramsSchema, 'params')
@@ -65,10 +105,14 @@ teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/lat
 teacherRouter.patch('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/lates/:lateId', validate(paramsSchema, 'params')
     ,validate(updateLateSchema), TeacherController.updateLate);
 
+
+
 teacherRouter.get('/groups/:groupId/subjects/:subjectId/credits', validate(paramsSchema, 'params'), TeacherController.getStudentsCredits);
 teacherRouter.post('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/credits', validate(paramsSchema, 'params')
     ,validate(studentIdSchema), TeacherController.addCredit);
 teacherRouter.delete('/groups/:groupId/subjects/:subjectId/lessons/:lessonId/credits/:creditId', validate(paramsSchema, 'params')
    ,TeacherController.deleteCredit);
+
+
 
 export default teacherRouter;

@@ -1,10 +1,16 @@
+import { CommentDTO } from '@/dto/commentDTO';
 import { LateDTO } from '@/dto/lateDTO';
 import { LessonDTO } from '@/dto/lessonDTO';
 import { MarkDTO } from '@/dto/markDTO';
+import { CommentsQueryDTO } from '@/dto/queries/commentsQueryDTO';
 import { UpdateWorkDTO } from '@/dto/updateWorkDTO';
 import { WorkDTO } from '@/dto/workDTO';
+import { UserRole } from '@/entities/user';
+import { SolutionCommentsService } from '@/services/solutionCommentsService';
+import { SolutionService } from '@/services/solutionService';
 import { TeacherService } from '@/services/teacherService';
 import { TimetableService } from '@/services/timetableService';
+import { WorkCommentsService } from '@/services/workCommentsService';
 import { WorkService } from '@/services/workService';
 import { Request, Response } from 'express';
 
@@ -40,8 +46,66 @@ export class TeacherController {
 
     public static async getWork(req: Request, res: Response) {
         const { subjectId, groupId, lessonId, workId } = req.params;
-        const result = await WorkService.get(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(groupId));
+        const result = await WorkService.get(req.user!.id, req.user!.role as UserRole, Number(subjectId), Number(groupId), Number(lessonId), Number(workId));
         res.status(200).json(result);
+    }
+
+    public static async getWorkComments(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId } = req.params;
+        const dto: CommentsQueryDTO = req.query;
+        const result = await WorkCommentsService.get(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), dto, Number(groupId));
+        res.status(200).json(result);
+    }
+
+    public static async createWorkComment(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId } = req.params;
+        const dto: CommentDTO = req.body;
+        const result = await WorkCommentsService.create(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), dto, Number(groupId));
+        res.status(200).json(result);
+    }
+
+    public static async updateWorkComment(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId, commentId } = req.params;
+        const { text } = req.body;
+        const result = await WorkCommentsService.update(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(commentId), text, Number(groupId));
+        res.status(200).json(result);
+    }
+
+    public static async deleteWorkComment(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId, commentId } = req.params;
+        await WorkCommentsService.delete(req.user!.id, Number(subjectId), Number(lessonId), Number(workId), Number(commentId), Number(groupId));
+        res.status(204).send();
+    }
+    
+    public static async getSolutionComments(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId, solutionId } = req.params;
+        const dto: CommentsQueryDTO = req.query;
+        const result = await SolutionCommentsService.get(req.user!.id, req.user!.role as UserRole, Number(subjectId), Number(groupId), Number(lessonId), 
+            Number(workId), Number(solutionId), dto);
+        res.status(200).json(result);
+    }
+
+    public static async createSolutionComment(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId, solutionId } = req.params;
+        const dto: CommentDTO = req.body;
+        const result = await SolutionCommentsService.create(req.user!.id, req.user!.role as UserRole, Number(subjectId), Number(groupId), Number(lessonId), 
+            Number(workId), Number(solutionId), dto);
+        res.status(200).json(result);
+    }
+
+    public static async updateSolutionComment(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId, solutionId, commentId } = req.params;
+        const { text } = req.body;
+        const result = await SolutionCommentsService.update(req.user!.id, req.user!.role as UserRole, Number(subjectId), Number(groupId), Number(lessonId), 
+            Number(workId), Number(solutionId), Number(commentId), text);
+        res.status(200).json(result);
+    }
+
+    public static async deleteSolutionComment(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId, solutionId, commentId } = req.params;
+        await SolutionCommentsService.delete(req.user!.id, req.user!.role as UserRole, Number(subjectId), Number(groupId), Number(lessonId), 
+            Number(workId), Number(solutionId), Number(commentId));
+        res.status(204).send();
     }
 
     public static async addWork(req: Request, res: Response) {
@@ -64,6 +128,12 @@ export class TeacherController {
         const { subjectId, groupId, lessonId, workId } = req.params;
         await WorkService.delete(req.user!.id, Number(subjectId), Number(groupId), Number(lessonId), Number(workId));
         res.status(204).send();
+    }
+
+    public static async getSolution(req: Request, res: Response) {
+        const { subjectId, groupId, lessonId, workId, solutionId } = req.params;
+        const result = await SolutionService.get(req.user!.id, req.user!.role as UserRole, Number(subjectId), Number(groupId), Number(lessonId), Number(workId), Number(solutionId));
+        res.status(200).json(result);
     }
 
     public static async addLesson(req: Request, res: Response) {
