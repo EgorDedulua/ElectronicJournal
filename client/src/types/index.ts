@@ -5,3 +5,6 @@ export * from './timetable';
 export * from './lesson';
 export * from './journal';
 export * from './course';
+export * from './work';
+export * from './solution';
+export * from './comment';

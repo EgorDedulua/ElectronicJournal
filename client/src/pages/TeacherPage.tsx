@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import httpClient from '../api/httpClient';
 import { dayNames } from '../utils/dayNames';
@@ -32,6 +33,7 @@ interface ActiveTeacherCell {
 }
 
 const TeacherPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'schedule' | 'journal'>('schedule');
   const [timetable, setTimetable] = useState<TimetableDay[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -391,6 +393,28 @@ const TeacherPage = () => {
     setIsLessonModalOpen(true);
   };
 
+  const openWorkPage = (row: TeacherJournalRow, date: string, cell?: TeacherJournalCell) => {
+    if (!cell || !selectedGroup || !selectedSubject) return;
+    
+    // Navigate to work page with lesson ID
+    // For now, navigate to a work creation page
+    navigate(`/teacher/work/new/${selectedGroup}/${selectedSubject}/${cell.lessonId}`);
+  };
+
+  const openWorkPageFromHeader = (date: string) => {
+    if (!selectedGroup || !selectedSubject) return;
+    
+    // Find the lesson for this date
+    const lesson = lessons.find(l => l.date.substring(0, 10) === date);
+    if (!lesson) {
+      setError('Урок не найден для этой даты');
+      return;
+    }
+    
+    // Navigate to work creation page with lesson ID
+    navigate(`/teacher/work/new/${selectedGroup}/${selectedSubject}/${lesson.id}`);
+  };
+
   const closeLessonModal = () => {
     setIsLessonModalOpen(false);
     setLessonDate('');
@@ -545,6 +569,7 @@ const TeacherPage = () => {
             if (button === 1) openLateCell(row, date, cell);
           } : undefined}
           onCellContextMenu={canEditSubject ? (row, date, cell) => toggleAbsenceCell(row, date, cell as TeacherJournalCell) : undefined}
+          onHeaderWorkButtonClick={canEditSubject ? openWorkPageFromHeader : undefined}
         />
         <p className="hint-text">
           Левый клик — оценка, средний клик — опоздание, правый клик — отсутствие.
@@ -649,58 +674,10 @@ const TeacherPage = () => {
             </div>
           </div>
         )}
-        {isLessonModalOpen && (
-          <div className="modal-backdrop" onClick={closeLessonModal}>
-            <div className="modal-card" onClick={(event) => event.stopPropagation()}>
-              <div className="modal-header">
-                <div>
-                  <div className="modal-label">Новый урок</div>
-                  <div className="modal-title">Добавление урока</div>
-                </div>
-                <button className="modal-close" onClick={closeLessonModal}>×</button>
-              </div>
-              <div className="modal-body">
-                <div className="modal-card-item">
-                  <label>Дата урока</label>
-                  <input
-                    type="date"
-                    value={lessonDate}
-                    onChange={(e) => setLessonDate(e.target.value)}
-                    disabled={lessonModalLoading}
-                  />
-                </div>
-                <div className="modal-card-item">
-                  <label>Тип урока</label>
-                  <select value={lessonType} onChange={(e) => setLessonType(e.target.value as any)} disabled={lessonModalLoading}>
-                    <option value="usual">Урок</option>
-                    <option value="lab">Лабораторная</option>
-                    <option value="practice">Практика</option>
-                    <option value="test">Тест</option>
-                    <option value="control">Контроль</option>
-                  </select>
-                </div>
-                <div className="modal-card-item">
-                  <label>Тема</label>
-                  <input
-                    type="text"
-                    value={lessonTopic}
-                    onChange={(e) => setLessonTopic(e.target.value)}
-                    disabled={lessonModalLoading}
-                  />
-                </div>
-                <div className="modal-actions">
-                  <button className="button button-primary button-block" onClick={submitNewLesson} disabled={lessonModalLoading}>
-                    Добавить урок
-                  </button>
-                </div>
-                {lessonModalError && <p className="form-error">{lessonModalError}</p>}
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     );
-  }, [selectedGroup, selectedSubject, journalDates, journalRows, groups, subjects, loading, error, activeCell, markValue, lateMinutes, autoLate, modalLoading, modalError, isLessonModalOpen, lessonDate, lessonType, lessonTopic, lessonModalError, lessonModalLoading]);
+  }, [selectedGroup, selectedSubject, journalDates, journalRows, groups, subjects, loading, error, activeCell, markValue, lateMinutes, autoLate, modalLoading, modalError, isLessonModalOpen, lessonDate, lessonType, lessonTopic, lessonModalError, lessonModalLoading, lessons]);
 
   return (
     <div className="page teacher-page">
@@ -761,6 +738,57 @@ const TeacherPage = () => {
           )}
         </div>
       </main>
+
+      {/* Lesson Modal - Always rendered, not dependent on journal state */}
+      {isLessonModalOpen && (
+        <div className="modal-backdrop" onClick={closeLessonModal}>
+          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-label">Новый урок</div>
+                <div className="modal-title">Добавление урока</div>
+              </div>
+              <button className="modal-close" onClick={closeLessonModal}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-card-item">
+                <label>Дата урока</label>
+                <input
+                  type="date"
+                  value={lessonDate}
+                  onChange={(e) => setLessonDate(e.target.value)}
+                  disabled={lessonModalLoading}
+                />
+              </div>
+              <div className="modal-card-item">
+                <label>Тип урока</label>
+                <select value={lessonType} onChange={(e) => setLessonType(e.target.value as any)} disabled={lessonModalLoading}>
+                  <option value="usual">Урок</option>
+                  <option value="lab">Лабораторная</option>
+                  <option value="practice">Практика</option>
+                  <option value="test">Тест</option>
+                  <option value="control">Контрольная</option>
+                </select>
+              </div>
+              <div className="modal-card-item">
+                <label>Тема</label>
+                <input
+                  type="text"
+                  value={lessonTopic}
+                  onChange={(e) => setLessonTopic(e.target.value)}
+                  disabled={lessonModalLoading}
+                />
+              </div>
+              <div className="modal-actions">
+                <button className="button button-primary button-block" onClick={submitNewLesson} disabled={lessonModalLoading}>
+                  Добавить урок
+                </button>
+              </div>
+              {lessonModalError && <p className="form-error">{lessonModalError}</p>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

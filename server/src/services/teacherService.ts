@@ -154,7 +154,7 @@ export class TeacherService {
 
             let newCredit = null;
             if (lesson.type === LessonType.LAB || lesson.type === LessonType.PRACTICE) {
-                if (mark.mark > 3 && !await creditRepo.findOne({ where: { lessonId: lessonId, studentId: mark.studentId }})) {
+                if (mark.mark >= 3 && !await creditRepo.findOne({ where: { lessonId: lessonId, studentId: mark.studentId }})) {
                     
                     newCredit = creditRepo.create({
                         studentId: mark.studentId,

@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import TeacherPage from './pages/TeacherPage';
 import StudentPage from './pages/StudentPage';
+import { WorkPage } from './pages/WorkPage';
+import { SolutionReviewPage } from './pages/SolutionReviewPage';
 
 function App() {
   const { user } = useAuth();
@@ -38,6 +40,46 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={[ 'student' ]}>
               <StudentPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/work/new/:groupId/:subjectId/:lessonId"
+          element={
+            <ProtectedRoute allowedRoles={[ 'teacher' ]}>
+              <WorkPage isTeacher={true} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/work/:workId/:groupId/:subjectId/:lessonId"
+          element={
+            <ProtectedRoute allowedRoles={[ 'teacher' ]}>
+              <WorkPage isTeacher={true} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/work/new/:groupId/:subjectId/:lessonId"
+          element={
+            <ProtectedRoute allowedRoles={[ 'teacher' ]}>
+              <WorkPage isTeacher={true} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/solution/:solutionId"
+          element={
+            <ProtectedRoute allowedRoles={[ 'teacher' ]}>
+              <SolutionReviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/work/:workId/:groupId/:subjectId/:lessonId"
+          element={
+            <ProtectedRoute allowedRoles={[ 'student' ]}>
+              <WorkPage isTeacher={false} />
             </ProtectedRoute>
           }
         />
