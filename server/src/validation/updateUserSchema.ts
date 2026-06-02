@@ -21,5 +21,8 @@ export const updateUserSchema = Joi.object({
     role: Joi.string().required().valid('student', 'teacher').optional().messages({
         'any.only': 'Роль должна быть student или teacher',
         'string.base' : 'Роль должна быть строкой'
+    }),
+    isExpelled: Joi.boolean().optional().messages({
+        'boolean.base' : 'Статус отчисления должен быть логическим значением'
     })
 });

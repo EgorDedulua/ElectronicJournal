@@ -250,6 +250,17 @@ export async function updateMark(
   return body.data ?? (res.data as MarkRecord);
 }
 
+export async function deleteMark(
+  groupId: number,
+  subjectId: number,
+  lessonId: number,
+  markId: number
+): Promise<void> {
+  await httpClient.delete(
+    `/teacher/groups/${groupId}/subjects/${subjectId}/lessons/${lessonId}/marks/${markId}`
+  );
+}
+
 export async function getTeacherCredits(
   groupId: number,
   subjectId: number

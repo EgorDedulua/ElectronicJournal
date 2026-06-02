@@ -153,6 +153,10 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
                 const lessonTypeLabel = cell?.lessonType
                   ? lessonTypeLabels[cell.lessonType] ?? cell.lessonType
                   : undefined;
+                const lessonTopic = cell?.lessonTopic?.trim();
+                const cellTitle = [lessonTypeLabel ? `Тип урока: ${lessonTypeLabel}` : null, lessonTopic ? `Тема: ${lessonTopic}` : null]
+                  .filter(Boolean)
+                  .join('\n');
 
                 return (
                   <td
@@ -171,7 +175,7 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
                         onCellContextMenu?.(row, date, cell, event);
                       }
                     }}
-                    title={lessonTypeLabel ? `Тип урока: ${lessonTypeLabel}` : undefined}
+                    title={cellTitle || undefined}
                     role={onCellClick && !isDisabled ? 'button' : undefined}
                     tabIndex={onCellClick && !isDisabled ? 0 : undefined}
                   >

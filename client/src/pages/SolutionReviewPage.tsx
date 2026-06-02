@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import httpClient from '../api/httpClient';
 import { SolutionData } from '../types/solution';
 import { CreditRecord, MarkRecord } from '../types/journal';
+import { Lesson } from '../types/lesson';
 import { CommentThread } from '../components/CommentThread';
 import { useComments } from '../hooks/useComments';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +12,8 @@ import {
   getTeacherMarks,
   getTeacherCredits,
   addMark,
+  deleteMark,
+  deleteCredit,
   updateMark,
 } from '../api/worksApi';
 import { getApiErrorMessage, logApiError } from '../utils/apiError';
@@ -40,6 +44,7 @@ export const SolutionReviewPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [lessonType, setLessonType] = useState<string | null>(null);
 
   const commentScope = useMemo(
     () => ({
@@ -72,10 +77,11 @@ export const SolutionReviewPage: React.FC = () => {
     const load = async () => {
       try {
         setIsLoading(true);
-        const [sol, marks, credits] = await Promise.all([
+        const [sol, marks, credits, lessons] = await Promise.all([
           getTeacherSolution({ groupId: gId, subjectId: sId, lessonId: lId, workId: wId, solutionId: solId }),
           getTeacherMarks(gId, sId),
           getTeacherCredits(gId, sId),
+          httpClient.get(`/teacher/groups/${gId}/subjects/${sId}/lessons`),
         ]);
         setSolution(sol);
         const mark = marks.find(
@@ -88,6 +94,9 @@ export const SolutionReviewPage: React.FC = () => {
           (c) => c.lessonId === lId && c.studentId === sol.studentId
         );
         setExistingCredit(credit ?? null);
+        const lessonData: Lesson[] = lessons.data.data ?? lessons.data;
+        const currentLesson = lessonData.find((lesson) => lesson.id === lId);
+        setLessonType(currentLesson?.type ?? null);
         setError(null);
       } catch (err: unknown) {
         logApiError('loadSolution', err);
@@ -135,6 +144,41 @@ export const SolutionReviewPage: React.FC = () => {
     }
   };
 
+  const handleDeleteMark = async () => {
+    if (!existingMark || !solution) return;
+    setIsSubmitting(true);
+    setModalError(null);
+    try {
+      await deleteMark(gId, sId, lId, existingMark.id);
+      setExistingMark(null);
+      setMarkValue('');
+
+      const credits = await getTeacherCredits(gId, sId);
+      const currentCredit = credits.find((c) => c.lessonId === lId && c.studentId === solution.studentId);
+      setExistingCredit(currentCredit ?? null);
+    } catch (err: unknown) {
+      logApiError('deleteMark', err);
+      setModalError(getApiErrorMessage(err, 'Не удалось убрать отметку'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteCredit = async () => {
+    if (!existingCredit) return;
+    setIsSubmitting(true);
+    setModalError(null);
+    try {
+      await deleteCredit(gId, sId, lId, existingCredit.id);
+      setExistingCredit(null);
+    } catch (err: unknown) {
+      logApiError('deleteCredit', err);
+      setModalError(getApiErrorMessage(err, 'Не удалось убрать зачёт'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="page-loading">Загрузка...</div>;
   }
@@ -161,6 +205,9 @@ export const SolutionReviewPage: React.FC = () => {
     setModalError(null);
     setMarkValue(existingMark ? String(existingMark.mark) : '');
   };
+
+  const normalizedLessonType = (lessonType ?? solution.lessonType ?? solution.lesson?.type ?? '').toLowerCase();
+  const canManageCredit = normalizedLessonType === 'lab' || normalizedLessonType === 'practice';
 
   return (
     <div className="work-page solution-review-page">
@@ -264,18 +311,6 @@ export const SolutionReviewPage: React.FC = () => {
                     disabled={isSubmitting}
                   />
 
-                  <div className="checkbox-row">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(existingCredit)}
-                        disabled
-                        readOnly
-                      />
-                      <span className="checkbox-text">Зачёт (автоматически по оценке)</span>
-                    </label>
-                  </div>
-
                   <button
                     type="button"
                     className="button button-primary button-block"
@@ -284,6 +319,26 @@ export const SolutionReviewPage: React.FC = () => {
                   >
                     {isSubmitting ? 'Сохранение...' : 'Сохранить'}
                   </button>
+
+                  <button
+                    type="button"
+                    className="button button-secondary button-block"
+                    onClick={handleDeleteMark}
+                    disabled={isSubmitting || !existingMark}
+                  >
+                    Убрать отметку
+                  </button>
+
+                  {canManageCredit && (
+                    <button
+                      type="button"
+                      className="button button-secondary button-block"
+                      onClick={handleDeleteCredit}
+                      disabled={isSubmitting || !existingCredit}
+                    >
+                      Убрать зачет
+                    </button>
+                  )}
                 </div>
               </div>
 

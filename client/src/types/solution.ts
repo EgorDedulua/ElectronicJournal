@@ -11,6 +11,10 @@ export interface SolutionData {
   workId: number;
   studentId: number;
   studentName: string;
+  lessonType?: string;
+  lesson?: {
+    type?: string;
+  };
   files: SolutionFile[];
   createdAt: string;
   updatedAt?: string;

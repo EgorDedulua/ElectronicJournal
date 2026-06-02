@@ -190,6 +190,7 @@ const TeacherPage = () => {
             date: lesson.date.substring(0, 10),
             lessonId: lesson.id,
             lessonType: lesson.type,
+            lessonTopic: lesson.topic,
             mark: cellMark?.mark?.toString(),
             markId: cellMark?.id,
             absence: Boolean(cellAbsence),

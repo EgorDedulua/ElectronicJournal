@@ -3,6 +3,8 @@ import Header from '../components/Header';
 import AdminCrudPanel from '../components/AdminCrudPanel';
 import httpClient from '../api/httpClient';
 import { Group, TimetableDay } from '../types';
+import { dayNames } from '../utils/dayNames';
+import { formatTime } from '../utils/formatTime';
 
 const sections = ['users', 'groups', 'subjects', 'courses', 'schedule'] as const;
 
@@ -88,20 +90,27 @@ const AdminPage = () => {
               {loading && <p>Загрузка расписания...</p>}
               {error && <p className="form-error">{error}</p>}
               {!loading && selectedGroup !== null && (
-                <div className="schedule-grid">
+                <div className="schedule-grid schedule-columns">
                   {timetable.length === 0 ? (
                     <p>Расписание пустое для выбранной группы.</p>
                   ) : timetable.map((day) => (
                     <div key={day.dayOfWeek} className="schedule-day-card">
-                      <div className="schedule-day-title">День {day.dayOfWeek}</div>
-                      <ul>
+                      <div className="schedule-day-title">{dayNames[day.dayOfWeek] ?? `День ${day.dayOfWeek}`}</div>
+                      <div className="schedule-day-list">
                         {day.lessons.map((lesson) => (
-                          <li key={lesson.id}>
-                            <strong>{lesson.lessonNumber} урок</strong> — {lesson.subjectName} ({lesson.teacherName})<br />
-                            {lesson.startTime}–{lesson.endTime}, {lesson.room}
-                          </li>
+                          <div key={lesson.id} className="schedule-item">
+                            <span className="lesson-number">{lesson.lessonNumber}</span>
+                            <div className="lesson-details">
+                              <div className="lesson-subject">{lesson.subjectName}</div>
+                              <div className="lesson-meta">
+                                {formatTime(lesson.startTime)} – {formatTime(lesson.endTime)}
+                                {lesson.teacherName ? <span className="lesson-group"> · {lesson.teacherName}</span> : null}
+                                {lesson.room ? <span className="lesson-group"> · {lesson.room}</span> : null}
+                              </div>
+                            </div>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   ))}
                 </div>

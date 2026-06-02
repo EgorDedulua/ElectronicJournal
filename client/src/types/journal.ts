@@ -31,6 +31,7 @@ export interface JournalCell {
   date: string;
   lessonId?: number;
   lessonType?: string;
+  lessonTopic?: string;
   mark?: string;
   markId?: number;
   absence?: boolean;

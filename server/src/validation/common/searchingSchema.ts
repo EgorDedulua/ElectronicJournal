@@ -15,7 +15,7 @@ export const searchingSchema = Joi.object({
         'any.only' : 'Параметры сортировки могут быть только ASC и DESC',
         'string.base' : 'Параметры сортировки должны быть строковыми'
     }),
-    searchString: Joi.string().optional().messages({
+    searchString: Joi.string().optional().allow('').messages({
         'string.base' : 'Строка поиска должна представлять собой строковый тип'
     }),
 });

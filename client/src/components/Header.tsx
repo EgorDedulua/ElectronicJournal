@@ -20,7 +20,7 @@ const Header = ({ children }: HeaderProps) => {
         <div className="brand-title">Электронный журнал</div>
       </div>
       
-      {children && <div className="header-nav">{children}</div>}
+      <div className="header-nav">{children}</div>
       
       {user && (
         <div className="user-panel">

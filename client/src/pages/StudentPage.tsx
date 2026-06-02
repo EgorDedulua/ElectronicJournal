@@ -82,6 +82,7 @@ const StudentPage = () => {
               date: lesson.date.substring(0, 10),
               lessonId: lesson.id,
               lessonType: lesson.type,
+              lessonTopic: lesson.topic,
               workId: lesson.workId ?? undefined,
               mark: marks.find((item) => item.lessonId === lesson.id)?.mark?.toString(),
               absence: absences.some((item) => item.lessonId === lesson.id),
@@ -103,7 +104,9 @@ const StudentPage = () => {
           const cells = sortedLessons.map((lesson) =>
             lessonIdToCell.get(lesson.id) ?? {
               date: lesson.date.substring(0, 10),
-              lessonId: lesson.id
+              lessonId: lesson.id,
+              lessonType: lesson.type,
+              lessonTopic: lesson.topic,
             }
           );
 
