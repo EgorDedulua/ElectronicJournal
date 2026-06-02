@@ -1,3 +1,10 @@
+export interface TimetableEntryDTO {
+  courseId: number;
+  dayOfWeek: number;
+  room: string;
+  lessonNumber: number;
+}
+
 export interface TimetableLesson {
   id: number;
   courseId: number;

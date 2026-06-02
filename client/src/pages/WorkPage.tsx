@@ -12,6 +12,7 @@ import {
   updateWork,
   deleteWork,
 } from '../api/worksApi';
+import EntityTimestampsMeta from '../components/EntityTimestampsMeta';
 import { getApiErrorMessage, logApiError } from '../utils/apiError';
 
 interface PendingFile {
@@ -379,6 +380,9 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
         <button type="button" className="back-button" onClick={goBack}>
           ← Назад
         </button>
+        {!canEditWork && <h1 className="work-page-title work-page-title-header">{work.title}</h1>}
+        {canEditWork && <h1 className="work-page-title work-page-title-header">Редактирование работы</h1>}
+        <EntityTimestampsMeta createdAt={work.createdAt} updatedAt={work.updatedAt} />
         {isTeacher && !isEditMode && (
           <div className="work-page-header-actions">
             <button type="button" className="button button-secondary button-small" onClick={() => setIsEditMode(true)}>
@@ -469,7 +473,6 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
             </>
           ) : (
             <>
-              <h1 className="work-page-title">{work.title}</h1>
               <div className="work-description">
                 <p>{work.description || 'Нет описания'}</p>
               </div>
@@ -507,7 +510,11 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
             <div className="solutions-list">
               <h3>Сдавшие ({work.solutions?.length ?? 0})</h3>
               {work.solutions && work.solutions.length > 0 ? (
-                work.solutions.map((sol) => (
+                [...work.solutions]
+                  .sort((a, b) =>
+                    a.studentName.localeCompare(b.studentName, 'ru', { sensitivity: 'base' })
+                  )
+                  .map((sol) => (
                   <button
                     key={sol.id}
                     type="button"

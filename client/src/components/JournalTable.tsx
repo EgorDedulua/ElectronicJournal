@@ -6,6 +6,7 @@ import { groupDatesByYearMonth } from '../utils/monthNames';
 interface JournalTableRow {
   name: string;
   cells: JournalCell[];
+  subjectId?: number;
   number?: number;
   isExpelled?: boolean;
   summary?: string;
@@ -22,6 +23,8 @@ interface JournalTableProps<RowType extends JournalTableRow = JournalTableRow> {
   onHeaderWorkButtonClick?: (date: string, workId?: number | null, lessonId?: number) => void;
   /** view-only: кнопка только если есть workId (для студента) */
   workHeaderMode?: 'create-or-view' | 'view-only';
+  onCellWorkClick?: (row: RowType, cell: JournalCell) => void;
+  showCellWorkButton?: boolean;
 }
 
 const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
@@ -34,6 +37,8 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
   onCellContextMenu,
   onHeaderWorkButtonClick,
   workHeaderMode = 'create-or-view',
+  onCellWorkClick,
+  showCellWorkButton = false,
 }: JournalTableProps<RowType>) => {
   const dateGroups = useMemo(() => groupDatesByYearMonth(header), [header]);
 
@@ -46,11 +51,11 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
   /** Метаданные по индексу колонки (одна колонка = один урок, даже при одинаковой дате) */
   const columnMeta = useMemo(() => {
     return flatDates.map((date, index) => {
-      // Для студента строки (предметы) имеют разные workId по колонкам.
-      // Берём приоритетно ячейку, где есть workId, иначе любую с lessonId.
-      const cellsAtColumn = rows.map((row) => row.cells[index]).filter(Boolean);
-      const cellWithWork = cellsAtColumn.find((cell) => cell?.workId != null);
-      const fallbackCell = cellsAtColumn.find((cell) => cell?.lessonId != null);
+      const cellsAtColumn = rows
+        .map((row) => row.cells[index])
+        .filter((cell): cell is JournalCell => Boolean(cell?.lessonId != null));
+      const cellWithWork = cellsAtColumn.find((cell) => cell.workId != null);
+      const fallbackCell = cellsAtColumn[0];
       const cell = cellWithWork ?? fallbackCell;
       return {
         date,
@@ -104,28 +109,30 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
                   const meta = columnMeta[colIndex];
                   const workId = meta?.workId;
                   const lessonId = meta?.lessonId;
-                  const hasWork = workId != null;
+                  const columnHasWork = rows.some(
+                    (row) => row.cells[colIndex]?.workId != null
+                  );
 
                   return (
                     <th
                       key={`col-${colIndex}-${lessonId ?? day.date}`}
-                      className={`day-header ${hasWork ? 'day-header-has-work' : ''} ${onHeaderWorkButtonClick ? 'day-header-with-work' : ''}`}
+                      className={`day-header ${columnHasWork ? 'day-header-has-work' : ''} ${onHeaderWorkButtonClick ? 'day-header-with-work' : ''}`}
                     >
                       <div className="day-header-inner">
                         <span className="day-header-number">{day.day}</span>
-                        {onHeaderWorkButtonClick && (workHeaderMode !== 'view-only' || hasWork) && (
+                        {onHeaderWorkButtonClick && (workHeaderMode !== 'view-only' || columnHasWork) && (
                           <button
                             type="button"
-                            className={`day-header-work-button ${hasWork ? 'day-header-work-view' : 'day-header-work-create'}`}
+                            className={`day-header-work-button ${columnHasWork ? 'day-header-work-view' : 'day-header-work-create'}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               onHeaderWorkButtonClick(day.date, workId, lessonId);
                             }}
-                            title={hasWork ? 'Перейти к работе' : 'Добавить работу'}
-                            aria-label={hasWork ? 'Перейти к работе' : 'Добавить работу'}
+                            title={columnHasWork ? 'Перейти к работе' : 'Добавить работу'}
+                            aria-label={columnHasWork ? 'Перейти к работе' : 'Добавить работу'}
                           >
                             <span className="day-header-work-button-icon" aria-hidden="true">
-                              {hasWork ? '→' : '+'}
+                              {columnHasWork ? '→' : '+'}
                             </span>
                           </button>
                         )}
@@ -147,14 +154,27 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
               {flatDates.map((date, cellIndex) => {
                 const cell = row.cells[cellIndex];
                 const isDisabled = row.isExpelled;
-                const hasCredit = Boolean(cell?.credit && ['lab', 'practice'].includes(cell.lessonType ?? ''));
+                const hasOwnLesson = cell?.lessonId != null;
+                const hasCredit = Boolean(
+                  hasOwnLesson &&
+                    cell?.credit &&
+                    ['lab', 'practice'].includes(cell.lessonType ?? '')
+                );
                 const isLabOrPracticeWithoutCredit =
-                  (cell?.lessonType === 'lab' || cell?.lessonType === 'practice') && !cell?.credit;
+                  hasOwnLesson &&
+                  (cell?.lessonType === 'lab' || cell?.lessonType === 'practice') &&
+                  !cell?.credit;
+                const hasWork = Boolean(
+                  showCellWorkButton && hasOwnLesson && cell?.workId != null
+                );
                 const lessonTypeLabel = cell?.lessonType
                   ? lessonTypeLabels[cell.lessonType] ?? cell.lessonType
                   : undefined;
                 const lessonTopic = cell?.lessonTopic?.trim();
-                const cellTitle = [lessonTypeLabel ? `Тип урока: ${lessonTypeLabel}` : null, lessonTopic ? `Тема: ${lessonTopic}` : null]
+                const cellTitle = [
+                  lessonTypeLabel ? `Тип урока: ${lessonTypeLabel}` : null,
+                  lessonTopic ? `Тема: ${lessonTopic}` : null,
+                ]
                   .filter(Boolean)
                   .join('\n');
 
@@ -180,11 +200,31 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
                     tabIndex={onCellClick && !isDisabled ? 0 : undefined}
                   >
                     {cell && (
-                      <>
-                        {cell.mark && <div className="journal-mark">{cell.mark}</div>}
-                        {cell.absence && <div className="journal-absence">Н</div>}
-                        {cell.lateMinutes != null && <div className="journal-late">{cell.lateMinutes}м</div>}
-                      </>
+                      <div className="journal-cell-inner">
+                        <div className="journal-cell-marks">
+                          {cell.mark && <div className="journal-mark">{cell.mark}</div>}
+                          {cell.absence && <div className="journal-absence">Н</div>}
+                          {cell.lateMinutes != null && (
+                            <div className="journal-late">{cell.lateMinutes}м</div>
+                          )}
+                        </div>
+                        {hasWork && cell && (
+                          <button
+                            type="button"
+                            className="journal-cell-work-button"
+                            title="Перейти к работе"
+                            aria-label="Перейти к работе"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCellWorkClick?.(row, cell);
+                            }}
+                          >
+                            <span className="day-header-work-button-icon" aria-hidden="true">
+                              →
+                            </span>
+                          </button>
+                        )}
+                      </div>
                     )}
                   </td>
                 );

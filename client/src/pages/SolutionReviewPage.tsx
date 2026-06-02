@@ -7,8 +7,10 @@ import { Lesson } from '../types/lesson';
 import { CommentThread } from '../components/CommentThread';
 import { useComments } from '../hooks/useComments';
 import { useAuth } from '../context/AuthContext';
+import SolutionSubmissionMeta from '../components/SolutionSubmissionMeta';
 import {
   getTeacherSolution,
+  getTeacherWork,
   getTeacherMarks,
   getTeacherCredits,
   addMark,
@@ -36,6 +38,7 @@ export const SolutionReviewPage: React.FC = () => {
   const solId = Number(solutionId);
 
   const [solution, setSolution] = useState<SolutionData | null>(null);
+  const [workDeadline, setWorkDeadline] = useState<string | undefined>();
   const [existingMark, setExistingMark] = useState<MarkRecord | null>(null);
   const [existingCredit, setExistingCredit] = useState<CreditRecord | null>(null);
   const [markValue, setMarkValue] = useState('');
@@ -77,13 +80,15 @@ export const SolutionReviewPage: React.FC = () => {
     const load = async () => {
       try {
         setIsLoading(true);
-        const [sol, marks, credits, lessons] = await Promise.all([
+        const [sol, work, marks, credits, lessons] = await Promise.all([
           getTeacherSolution({ groupId: gId, subjectId: sId, lessonId: lId, workId: wId, solutionId: solId }),
+          getTeacherWork({ groupId: gId, subjectId: sId, lessonId: lId, workId: wId }),
           getTeacherMarks(gId, sId),
           getTeacherCredits(gId, sId),
           httpClient.get(`/teacher/groups/${gId}/subjects/${sId}/lessons`),
         ]);
         setSolution(sol);
+        setWorkDeadline(work.deadline);
         const mark = marks.find(
           (m) => m.lessonId === lId && m.studentId === sol.studentId
         );
@@ -211,11 +216,12 @@ export const SolutionReviewPage: React.FC = () => {
 
   return (
     <div className="work-page solution-review-page">
-      <div className="work-page-header">
+      <div className="work-page-header solution-page-header">
         <button type="button" className="back-button" onClick={goBack}>
           ← К работе
         </button>
         <h1>Решение: {solution.studentName}</h1>
+        <SolutionSubmissionMeta solution={solution} deadline={workDeadline} />
       </div>
 
       <div className="work-page-layout">

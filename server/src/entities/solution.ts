@@ -6,8 +6,7 @@ import {
     ManyToOne,
     OneToMany,
     OneToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn
+    PrimaryGeneratedColumn
 } from 'typeorm';
 import { Work } from './work';
 import { User } from './user';
@@ -29,8 +28,8 @@ export class Solution {
     @CreateDateColumn()
     createdAt!: Date;
 
-    @Column({ type: 'date', nullable: true })
-    updatedAt?: Date;
+    @Column({ type: 'timestamp', nullable: true })
+    updatedAt?: Date | null;
 
     @OneToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'student_id' })

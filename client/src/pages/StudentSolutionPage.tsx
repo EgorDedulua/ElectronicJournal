@@ -13,6 +13,8 @@ import {
   getStudentWork,
   updateSolution,
 } from '../api/worksApi';
+import EntityTimestampsMeta from '../components/EntityTimestampsMeta';
+import SolutionSubmissionMeta from '../components/SolutionSubmissionMeta';
 import { getApiErrorMessage, logApiError } from '../utils/apiError';
 
 interface PendingFile {
@@ -235,11 +237,14 @@ export const StudentSolutionPage: React.FC = () => {
 
   return (
     <div className="work-page student-solution-page">
-      <div className="work-page-header">
+      <div className="work-page-header solution-page-header">
         <button type="button" className="back-button" onClick={goBack}>
           ← К работе
         </button>
         <h1>Моё решение</h1>
+        {solution && (
+          <SolutionSubmissionMeta solution={solution} deadline={work.deadline} />
+        )}
       </div>
 
       <div className="work-page-layout">
@@ -313,6 +318,12 @@ export const StudentSolutionPage: React.FC = () => {
 
         <div className="work-info-column">
           <h1 className="work-page-title">{work.title}</h1>
+          <EntityTimestampsMeta
+            createdAt={work.createdAt}
+            updatedAt={work.updatedAt}
+            createdLabel="Работа создана"
+            updatedLabel="Работа изменена"
+          />
           <div className="work-description">
             <p>{work.description || 'Нет описания'}</p>
           </div>

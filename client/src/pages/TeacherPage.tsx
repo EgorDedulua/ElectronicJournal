@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import httpClient from '../api/httpClient';
-import { dayNames } from '../utils/dayNames';
-import { formatTime } from '../utils/formatTime';
+import ScheduleGrid from '../components/ScheduleGrid';
 import { Group, Student, Subject, TimetableDay, Lesson, MarkRecord, AbsenceRecord, LateRecord, CreditRecord, JournalCell } from '../types';
 import { lessonTypeLabels } from '../types/lesson';
 import JournalTable from '../components/JournalTable';
@@ -529,28 +528,17 @@ const TeacherPage = () => {
     if (loading) return <p>Загрузка...</p>;
     if (!timetable.length) return <p>Нет данных расписания.</p>;
 
+    const days = timetable.map((day) => day.dayOfWeek).sort((a, b) => a - b);
+
     return (
-      <div className="schedule-grid schedule-columns">
-        {timetable.map((day) => (
-          <div key={day.dayOfWeek} className="schedule-day-card">
-            <div className="schedule-day-title">{dayNames[day.dayOfWeek] ?? `День ${day.dayOfWeek}`}</div>
-            <div className="schedule-day-list">
-              {day.lessons.map((lesson) => (
-                <div key={lesson.id} className="schedule-item">
-                  <span className="lesson-number">{lesson.lessonNumber}</span>
-                  <div className="lesson-details">
-                    <div className="lesson-subject">{lesson.subjectName}</div>
-                    <div className="lesson-meta">
-                      {formatTime(lesson.startTime)} – {formatTime(lesson.endTime)}
-                      {lesson.groupName && <span className="lesson-group"> · {lesson.groupName}</span>}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      <ScheduleGrid
+        days={days}
+        getLessonsForDay={(dayOfWeek) =>
+          timetable.find((day) => day.dayOfWeek === dayOfWeek)?.lessons ?? []
+        }
+        showGroup
+        showRoom={false}
+      />
     );
   }, [loading, timetable]);
 

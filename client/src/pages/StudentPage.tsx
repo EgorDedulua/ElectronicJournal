@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import httpClient from '../api/httpClient';
 import { useAuth } from '../context/AuthContext';
-import { dayNames } from '../utils/dayNames';
-import { formatTime } from '../utils/formatTime';
+import ScheduleGrid from '../components/ScheduleGrid';
 import { Subject, TimetableDay, Lesson, MarkRecord, AbsenceRecord, LateRecord, CreditRecord, JournalCell } from '../types';
 import JournalTable from '../components/JournalTable';
 
 interface SubjectJournalRow {
   name: string;
+  subjectId: number;
   cells: JournalCell[];
   summary?: string;
 }
@@ -101,16 +101,14 @@ const StudentPage = () => {
         const dates = sortedLessons.map((lesson) => lesson.date.substring(0, 10));
 
         const alignedRows = subjectRows.map(({ subject, lessonIdToCell }) => {
-          const cells = sortedLessons.map((lesson) =>
-            lessonIdToCell.get(lesson.id) ?? {
-              date: lesson.date.substring(0, 10),
-              lessonId: lesson.id,
-              lessonType: lesson.type,
-              lessonTopic: lesson.topic,
-            }
-          );
+          const cells = sortedLessons.map((lesson) => {
+            const ownCell = lessonIdToCell.get(lesson.id);
+            if (ownCell) return ownCell;
+            return { date: lesson.date.substring(0, 10) };
+          });
 
           const markValues = cells
+            .filter((cell) => cell.lessonId != null)
             .map((cell) => Number(cell.mark))
             .filter((value) => !Number.isNaN(value));
 
@@ -120,8 +118,9 @@ const StudentPage = () => {
 
           return {
             name: subject.name,
+            subjectId: subject.id,
             cells,
-            summary: average !== null ? average.toFixed(2).replace('.', ',') : '-'
+            summary: average !== null ? average.toFixed(2).replace('.', ',') : '-',
           };
         });
 
@@ -142,25 +141,17 @@ const StudentPage = () => {
     if (!user?.groupId) return <p>Группа не назначена.</p>;
     if (!timetable.length) return <p>Расписание не найдено.</p>;
 
+    const days = timetable.map((day) => day.dayOfWeek).sort((a, b) => a - b);
+
     return (
-      <div className="schedule-grid schedule-columns">
-        {timetable.map((day) => (
-          <div key={day.dayOfWeek} className="schedule-day-card">
-            <div className="schedule-day-title">{dayNames[day.dayOfWeek] ?? `День ${day.dayOfWeek}`}</div>
-            <div className="schedule-day-list">
-              {day.lessons.map((lesson) => (
-                <div key={lesson.id} className="schedule-item">
-                  <div className="lesson-number">{lesson.lessonNumber}</div>
-                  <div>
-                    <div className="lesson-subject">{lesson.subjectName}</div>
-                    <div className="lesson-meta">{formatTime(lesson.startTime)} – {formatTime(lesson.endTime)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      <ScheduleGrid
+        days={days}
+        getLessonsForDay={(dayOfWeek) =>
+          timetable.find((day) => day.dayOfWeek === dayOfWeek)?.lessons ?? []
+        }
+        showTeacher
+        showRoom
+      />
     );
   }, [loading, timetable, user?.groupId]);
 
@@ -169,15 +160,12 @@ const StudentPage = () => {
     if (error) return <p className="form-error">{error}</p>;
     if (!journalRows.length) return <p>Журнал пока пуст.</p>;
 
-    const openStudentWork = (_date: string, workId?: number | null, lessonId?: number) => {
-      if (!workId || !user?.groupId || !lessonId) return;
+    const openStudentWork = (row: SubjectJournalRow, cell: JournalCell) => {
+      if (!cell.workId || !cell.lessonId || !user?.groupId) return;
       sessionStorage.setItem('studentActiveTab', 'journal');
-      const subjectRow = journalRows.find((row) =>
-        row.cells.some((cell) => cell.lessonId === lessonId && cell.workId === workId)
+      navigate(
+        `/student/work/${cell.workId}/${user.groupId}/${row.subjectId}/${cell.lessonId}`
       );
-      const subject = subjects.find((s) => s.name === subjectRow?.name);
-      if (!subject) return;
-      navigate(`/student/work/${workId}/${user.groupId}/${subject.id}/${lessonId}`);
     };
 
     return (
@@ -186,13 +174,16 @@ const StudentPage = () => {
           header={journalDates}
           rows={journalRows}
           summaryLabel="Средний"
-          onHeaderWorkButtonClick={openStudentWork}
-          workHeaderMode="view-only"
+          showCellWorkButton
+          onCellWorkClick={openStudentWork}
         />
-        <p className="hint-text">Журнал показывает предметы слева и отметки, пропуски, опоздания, зачеты по датам. Наведите на дату с работой для перехода.</p>
+        <p className="hint-text">
+          Предметы слева, уроки по датам в столбцах. Наведите на ячейку с уроком — тема и тип занятия.
+          Кнопка «→» в ячейке открывает работу по этому предмету.
+        </p>
       </div>
     );
-  }, [journalDates, journalRows, loading, error, navigate, user?.groupId, subjects]);
+  }, [journalDates, journalRows, loading, error, navigate, user?.groupId]);
 
   return (
     <div className="page student-page">

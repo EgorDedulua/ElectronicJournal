@@ -9,6 +9,8 @@ export interface WorkFile {
 export interface WorkSolutionSummary {
   id: number;
   studentName: string;
+  createdAt: string;
+  updatedAt?: string | null;
 }
 
 export interface WorkData {
