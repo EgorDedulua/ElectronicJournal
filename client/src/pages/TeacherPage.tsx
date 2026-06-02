@@ -5,6 +5,7 @@ import httpClient from '../api/httpClient';
 import { dayNames } from '../utils/dayNames';
 import { formatTime } from '../utils/formatTime';
 import { Group, Student, Subject, TimetableDay, Lesson, MarkRecord, AbsenceRecord, LateRecord, CreditRecord, JournalCell } from '../types';
+import { lessonTypeLabels } from '../types/lesson';
 import JournalTable from '../components/JournalTable';
 
 interface TeacherJournalCell extends JournalCell {
@@ -34,12 +35,21 @@ interface ActiveTeacherCell {
 
 const TeacherPage = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'schedule' | 'journal'>('schedule');
+  const [activeTab, setActiveTab] = useState<'schedule' | 'journal'>(() => {
+    const saved = sessionStorage.getItem('teacherActiveTab');
+    return (saved as 'schedule' | 'journal') || 'schedule';
+  });
   const [timetable, setTimetable] = useState<TimetableDay[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
-  const [selectedGroup, setSelectedGroup] = useState<number | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<number | null>(() => {
+    const saved = sessionStorage.getItem('teacherSelectedGroup');
+    return saved ? parseInt(saved, 10) : null;
+  });
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<number | null>(() => {
+    const saved = sessionStorage.getItem('teacherSelectedSubject');
+    return saved ? parseInt(saved, 10) : null;
+  });
   const [students, setStudents] = useState<Student[]>([]);
   const [groupCurator, setGroupCurator] = useState<{ id: number; fullName: string } | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -72,8 +82,37 @@ const TeacherPage = () => {
 
     httpClient.get('/teacher/groups')
       .then((response) => setGroups(response.data.data ?? response.data))
-      .catch(() => setError('Не удалось загрузить группы'));
+      .catch(() => setError('Не удалось загрузить группы'))
+      .finally(() => {
+        // Restore journal state from sessionStorage if returning from work page
+        const savedState = sessionStorage.getItem('journalReturnState');
+        if (savedState) {
+          try {
+            const { groupId, subjectId, activeTab: savedTab } = JSON.parse(savedState);
+            setSelectedGroup(groupId);
+            setSelectedSubject(subjectId);
+            if (savedTab === 'journal') setActiveTab('journal');
+            sessionStorage.removeItem('journalReturnState');
+          } catch (e) {
+            // Ignore parsing errors
+          }
+        }
+      });
   }, []);
+
+  // Save selected group to sessionStorage
+  useEffect(() => {
+    if (selectedGroup !== null) {
+      sessionStorage.setItem('teacherSelectedGroup', selectedGroup.toString());
+    }
+  }, [selectedGroup]);
+
+  // Save selected subject to sessionStorage
+  useEffect(() => {
+    if (selectedSubject !== null) {
+      sessionStorage.setItem('teacherSelectedSubject', selectedSubject.toString());
+    }
+  }, [selectedSubject]);
 
   useEffect(() => {
     if (selectedGroup === null) {
@@ -158,7 +197,8 @@ const TeacherPage = () => {
             lateMinutes: cellLate?.minutes,
             lateId: cellLate?.id,
             credit: Boolean(cellCredit),
-            creditId: cellCredit?.id
+            creditId: cellCredit?.id,
+            workId: lesson.workId || undefined
           };
         })
       }));
@@ -393,26 +433,37 @@ const TeacherPage = () => {
     setIsLessonModalOpen(true);
   };
 
-  const openWorkPage = (row: TeacherJournalRow, date: string, cell?: TeacherJournalCell) => {
-    if (!cell || !selectedGroup || !selectedSubject) return;
-    
-    // Navigate to work page with lesson ID
-    // For now, navigate to a work creation page
-    navigate(`/teacher/work/new/${selectedGroup}/${selectedSubject}/${cell.lessonId}`);
+  const saveJournalReturnState = () => {
+    if (!selectedGroup || !selectedSubject) return;
+    sessionStorage.setItem('journalReturnState', JSON.stringify({
+      groupId: selectedGroup,
+      subjectId: selectedSubject,
+      activeTab: 'journal',
+    }));
+    sessionStorage.setItem('teacherActiveTab', 'journal');
   };
 
-  const openWorkPageFromHeader = (date: string) => {
+  const openWorkPageFromHeader = (_date: string, workId?: number | null, lessonId?: number) => {
     if (!selectedGroup || !selectedSubject) return;
-    
-    // Find the lesson for this date
-    const lesson = lessons.find(l => l.date.substring(0, 10) === date);
-    if (!lesson) {
-      setError('Урок не найден для этой даты');
+
+    if (!lessonId) {
+      setError('Урок не найден для этой колонки');
       return;
     }
-    
-    // Navigate to work creation page with lesson ID
-    navigate(`/teacher/work/new/${selectedGroup}/${selectedSubject}/${lesson.id}`);
+
+    const lesson = lessons.find((l) => l.id === lessonId);
+    if (!lesson) {
+      setError('Урок не найден');
+      return;
+    }
+
+    saveJournalReturnState();
+
+    if (workId) {
+      navigate(`/teacher/work/${workId}/${selectedGroup}/${selectedSubject}/${lesson.id}`);
+    } else {
+      navigate(`/teacher/work/new/${selectedGroup}/${selectedSubject}/${lesson.id}`);
+    }
   };
 
   const closeLessonModal = () => {
@@ -590,7 +641,7 @@ const TeacherPage = () => {
                 <p className="modal-subtitle">Дата: {activeCell.date}</p>
                 <p className="modal-subtitle">Урок: {activeCell.lesson?.topic ?? '—'}</p>
                 {activeCell.lesson?.type && (
-                  <p className="modal-subtitle">Тип урока: {activeCell.lesson.type === 'lab' ? 'Лабораторная' : activeCell.lesson.type === 'practice' ? 'Практика' : activeCell.lesson.type === 'test' ? 'Тест' : activeCell.lesson.type === 'control' ? 'Контроль' : 'Урок'}</p>
+                  <p className="modal-subtitle">Тип урока: {lessonTypeLabels[activeCell.lesson.type] ?? 'Урок'}</p>
                 )}
                 {activeCell?.mode === 'mark' ? (
                   <div className="modal-grid">
@@ -630,7 +681,7 @@ const TeacherPage = () => {
                             onChange={(e) => setAutoLate(e.target.checked)}
                             disabled={modalLoading}
                           />
-                          Автоматический расчёт
+                          <span className="checkbox-text">Автоматический расчёт</span>
                         </label>
                       </div>
                       <button className="button button-secondary button-block" onClick={submitLate} disabled={modalLoading}>Сохранить опоздание</button>
@@ -685,13 +736,19 @@ const TeacherPage = () => {
         <nav className="header-nav-items">
           <button 
             className={`nav-item ${activeTab === 'schedule' ? 'nav-item-active' : ''}`}
-            onClick={() => setActiveTab('schedule')}
+            onClick={() => {
+              setActiveTab('schedule');
+              sessionStorage.setItem('teacherActiveTab', 'schedule');
+            }}
           >
             Расписание
           </button>
           <button 
             className={`nav-item ${activeTab === 'journal' ? 'nav-item-active' : ''}`}
-            onClick={() => setActiveTab('journal')}
+            onClick={() => {
+              setActiveTab('journal');
+              sessionStorage.setItem('teacherActiveTab', 'journal');
+            }}
           >
             Журнал
           </button>

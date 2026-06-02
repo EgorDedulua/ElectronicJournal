@@ -4,26 +4,19 @@ export interface CommentAuthor {
   role: 'teacher' | 'student' | 'admin';
 }
 
+export interface CommentParentPreview {
+  id: number;
+  text: string;
+  author: CommentAuthor;
+}
+
 export interface CommentBase {
   id: number;
   text: string;
   author: CommentAuthor;
   createdAt: string;
   updatedAt?: string;
-  parentId?: number;
-}
-
-export interface WorkComment extends CommentBase {
-  workId: number;
-}
-
-export interface SolutionComment extends CommentBase {
-  solutionId: number;
-}
-
-export interface CommentWithReplies extends CommentBase {
-  parent?: CommentBase;
-  replies?: CommentWithReplies[];
+  parent?: CommentParentPreview | null;
 }
 
 export interface CreateCommentDTO {
@@ -39,4 +32,10 @@ export interface CommentsResponse {
   data: CommentBase[];
   hasMore: boolean;
   nextOffset: number;
+}
+
+/** @deprecated use CommentBase */
+export interface CommentWithReplies extends CommentBase {
+  parentId?: number;
+  replies?: CommentWithReplies[];
 }

@@ -1,152 +1,297 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { SolutionData, CommentWithReplies } from '../types';
+import { SolutionData } from '../types/solution';
+import { CreditRecord, MarkRecord } from '../types/journal';
+import { CommentThread } from '../components/CommentThread';
+import { useComments } from '../hooks/useComments';
+import { useAuth } from '../context/AuthContext';
+import {
+  getTeacherSolution,
+  getTeacherMarks,
+  getTeacherCredits,
+  addMark,
+  updateMark,
+} from '../api/worksApi';
+import { getApiErrorMessage, logApiError } from '../utils/apiError';
 
 export const SolutionReviewPage: React.FC = () => {
-  const { solutionId } = useParams<{ solutionId: string }>();
+  const { solutionId, groupId, subjectId, lessonId, workId } = useParams<{
+    solutionId: string;
+    groupId: string;
+    subjectId: string;
+    lessonId: string;
+    workId: string;
+  }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const gId = Number(groupId);
+  const sId = Number(subjectId);
+  const lId = Number(lessonId);
+  const wId = Number(workId);
+  const solId = Number(solutionId);
 
   const [solution, setSolution] = useState<SolutionData | null>(null);
-  const [comments, setComments] = useState<CommentWithReplies[]>([]);
+  const [existingMark, setExistingMark] = useState<MarkRecord | null>(null);
+  const [existingCredit, setExistingCredit] = useState<CreditRecord | null>(null);
+  const [markValue, setMarkValue] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mark, setMark] = useState<number | null>(null);
-  const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  const commentScope = useMemo(
+    () => ({
+      groupId: gId,
+      subjectId: sId,
+      lessonId: lId,
+      workId: wId,
+      solutionId: solId,
+      isTeacher: true,
+    }),
+    [gId, sId, lId, wId, solId]
+  );
+
+  const {
+    comments,
+    hasMore,
+    isLoading: commentsLoading,
+    load: loadComments,
+    loadMore,
+    add: addComment,
+    edit: editComment,
+    remove: removeComment,
+  } = useComments(commentScope);
 
   useEffect(() => {
-    const loadSolution = async () => {
+    loadComments();
+  }, [loadComments]);
+
+  useEffect(() => {
+    const load = async () => {
       try {
         setIsLoading(true);
-        // TODO: Fetch solution data from API
+        const [sol, marks, credits] = await Promise.all([
+          getTeacherSolution({ groupId: gId, subjectId: sId, lessonId: lId, workId: wId, solutionId: solId }),
+          getTeacherMarks(gId, sId),
+          getTeacherCredits(gId, sId),
+        ]);
+        setSolution(sol);
+        const mark = marks.find(
+          (m) => m.lessonId === lId && m.studentId === sol.studentId
+        );
+        setExistingMark(mark ?? null);
+        setMarkValue(mark ? String(mark.mark) : '');
+
+        const credit = credits.find(
+          (c) => c.lessonId === lId && c.studentId === sol.studentId
+        );
+        setExistingCredit(credit ?? null);
         setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load solution');
+      } catch (err: unknown) {
+        logApiError('loadSolution', err);
+        setError(getApiErrorMessage(err, 'Не удалось загрузить решение'));
       } finally {
         setIsLoading(false);
       }
     };
+    if (solId && gId && sId && lId && wId) load();
+  }, [solId, gId, sId, lId, wId]);
 
-    if (solutionId) {
-      loadSolution();
-    }
-  }, [solutionId]);
+  const goBack = () => {
+    navigate(`/teacher/work/${wId}/${gId}/${sId}/${lId}`);
+  };
 
   const handleSubmitGrade = async () => {
-    if (mark === null) {
-      setError('Пожалуйста, укажите оценку');
+    const mark = Number(markValue);
+    if (!solution || Number.isNaN(mark) || mark < 1 || mark > 10) {
+      setModalError('Укажите оценку от 1 до 10');
       return;
     }
-
+    setIsSubmitting(true);
+    setModalError(null);
     try {
-      setIsSubmitting(true);
-      // TODO: Submit grade via API
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit grade');
+      // Зачёт на бэкенде меняется автоматически от оценки (>= 3 для lab/practice).
+      // Здесь сохраняем оценку и затем перечитываем кредиты, чтобы UI всегда совпадал с сервером.
+      if (existingMark) {
+        const updated = await updateMark(gId, sId, lId, existingMark.id, mark);
+        setExistingMark(updated);
+      } else {
+        const created = await addMark(gId, sId, lId, solution.studentId, mark);
+        setExistingMark(created);
+      }
+
+      const credits = await getTeacherCredits(gId, sId);
+      const currentCredit = credits.find((c) => c.lessonId === lId && c.studentId === solution.studentId);
+      setExistingCredit(currentCredit ?? null);
+
+      setIsGradeModalOpen(false);
+    } catch (err: unknown) {
+      logApiError('submitGrade', err);
+      setModalError(getApiErrorMessage(err, 'Не удалось выставить оценку и зачёт'));
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const goBack = () => {
-    navigate(-1);
   };
 
   if (isLoading) {
     return <div className="page-loading">Загрузка...</div>;
   }
 
-  if (error) {
-    return <div className="page-error">{error}</div>;
+  if (!solution) {
+    return (
+      <div className="work-page">
+        <p className="page-error">{error || 'Решение не найдено'}</p>
+        <button type="button" className="button button-secondary" onClick={goBack}>
+          Назад
+        </button>
+      </div>
+    );
   }
 
-  if (!solution) {
-    return <div className="page-not-found">Решение не найдено</div>;
-  }
+  const openGradeModal = () => {
+    setModalError(null);
+    setIsGradeModalOpen(true);
+    setMarkValue(existingMark ? String(existingMark.mark) : '');
+  };
+
+  const closeGradeModal = () => {
+    setIsGradeModalOpen(false);
+    setModalError(null);
+    setMarkValue(existingMark ? String(existingMark.mark) : '');
+  };
 
   return (
-    <div className="solution-review-page">
-      <div className="solution-page-header">
-        <button className="back-button" onClick={goBack}>
-          ← Назад
+    <div className="work-page solution-review-page">
+      <div className="work-page-header">
+        <button type="button" className="back-button" onClick={goBack}>
+          ← К работе
         </button>
-        <h1>Проверка решения</h1>
+        <h1>Решение: {solution.studentName}</h1>
       </div>
 
-      <div className="solution-review-layout">
-        {/* Left column: Solution files */}
-        <div className="solution-files-column">
+      <div className="work-page-layout">
+        <div className="work-files-column">
           <h3>Файлы решения</h3>
           {solution.files && solution.files.length > 0 ? (
-            <div className="file-list">
+            <ul className="file-list">
               {solution.files.map((file) => (
-                <div key={file.id} className="file-item">
-                  <a href="#" download>
-                    {file.originalName}
-                  </a>
-                </div>
+                <li key={file.id} className="file-item">
+                  <span className="file-item-name">{file.originalName}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : (
             <div className="no-files">Нет файлов</div>
           )}
         </div>
 
-        {/* Middle column: Solution info and comments */}
-        <div className="solution-info-column">
-          <div className="solution-student">
-            <strong>Студент:</strong> {solution.student?.fullName}
-          </div>
-
-          <div className="solution-date">
-            <strong>Дата сдачи:</strong> {new Date(solution.createdAt).toLocaleString('ru-RU')}
-          </div>
-
-          <div className="solution-comments">
-            <h4>Комментарии</h4>
-            {/* TODO: Render CommentThread component here */}
+        <div className="work-info-column">
+          <div className="work-comments">
+            <h4>Комментарии к решению</h4>
+            <CommentThread
+              comments={comments}
+              isLoading={commentsLoading}
+              canReply
+              canEdit={(authorId) => authorId === user?.id}
+              canDelete={(authorId) => authorId === user?.id}
+              onAdd={addComment}
+              onEdit={editComment}
+              onDelete={removeComment}
+              currentUserId={user?.id}
+              hasMore={hasMore}
+              onLoadMore={loadMore}
+            />
           </div>
         </div>
 
-        {/* Right column: Grading panel */}
-        <div className="grading-panel">
-          <h3>Оценивание</h3>
-
-          <div className="grade-input">
-            <label>Оценка</label>
-            <input
-              type="number"
-              min="1"
-              max="100"
-              value={mark ?? ''}
-              onChange={(e) => setMark(e.target.value ? parseInt(e.target.value) : null)}
-              disabled={isSubmitting}
-            />
-          </div>
-
-          <div className="feedback-input">
-            <label>Комментарий</label>
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Введите комментарий для студента..."
-              disabled={isSubmitting}
-              rows={5}
-            />
-          </div>
+        <div className="work-sidebar">
+          <h3>Оценить работу</h3>
 
           <button
-            className="submit-grade-btn"
-            onClick={handleSubmitGrade}
-            disabled={isSubmitting || mark === null}
+            type="button"
+            className="button button-primary button-block"
+            onClick={openGradeModal}
+            disabled={isSubmitting}
           >
-            Оценить работу
+            {existingMark || existingCredit ? 'Изменить оценку и зачёт' : 'Выставить оценку и зачёт'}
           </button>
 
-          {error && <div className="error-message">{error}</div>}
+          {(existingMark || existingCredit) && (
+            <p className="hint-text">
+              {existingMark && (
+                <>
+                  Оценка: <strong>{existingMark.mark}</strong>
+                  {existingCredit ? ', ' : ''}
+                </>
+              )}
+              {existingCredit ? (
+                <>
+                  Зачёт: <strong>получен</strong>
+                </>
+              ) : null}
+            </p>
+          )}
+
+          {error && <p className="form-error">{error}</p>}
         </div>
       </div>
+
+      {isGradeModalOpen && solution && (
+        <div className="modal-backdrop" onClick={closeGradeModal}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <div className="modal-label">Оценка и зачёт</div>
+                <div className="modal-title">{solution.studentName}</div>
+              </div>
+              <button type="button" className="modal-close" onClick={closeGradeModal}>
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="modal-grid">
+                <div className="modal-card-item">
+                  <label>Оценка (1–10)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={markValue}
+                    onChange={(e) => setMarkValue(e.target.value)}
+                    disabled={isSubmitting}
+                  />
+
+                  <div className="checkbox-row">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(existingCredit)}
+                        disabled
+                        readOnly
+                      />
+                      <span className="checkbox-text">Зачёт (автоматически по оценке)</span>
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="button button-primary button-block"
+                    onClick={handleSubmitGrade}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Сохранение...' : 'Сохранить'}
+                  </button>
+                </div>
+              </div>
+
+              {modalError && <p className="form-error">{modalError}</p>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

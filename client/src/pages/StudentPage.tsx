@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import httpClient from '../api/httpClient';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +14,7 @@ interface SubjectJournalRow {
   summary?: string;
 }
 const StudentPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [timetable, setTimetable] = useState<TimetableDay[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -20,7 +22,14 @@ const StudentPage = () => {
   const [journalRows, setJournalRows] = useState<SubjectJournalRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'schedule' | 'journal'>('schedule');
+  const [activeTab, setActiveTab] = useState<'schedule' | 'journal'>(() => {
+    const saved = sessionStorage.getItem('studentActiveTab');
+    return saved === 'journal' ? 'journal' : 'schedule';
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem('studentActiveTab', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     if (!user?.groupId) return;
@@ -73,6 +82,7 @@ const StudentPage = () => {
               date: lesson.date.substring(0, 10),
               lessonId: lesson.id,
               lessonType: lesson.type,
+              workId: lesson.workId ?? undefined,
               mark: marks.find((item) => item.lessonId === lesson.id)?.mark?.toString(),
               absence: absences.some((item) => item.lessonId === lesson.id),
               lateMinutes: lates.find((item) => item.lessonId === lesson.id)?.minutes,
@@ -156,13 +166,30 @@ const StudentPage = () => {
     if (error) return <p className="form-error">{error}</p>;
     if (!journalRows.length) return <p>Журнал пока пуст.</p>;
 
+    const openStudentWork = (_date: string, workId?: number | null, lessonId?: number) => {
+      if (!workId || !user?.groupId || !lessonId) return;
+      sessionStorage.setItem('studentActiveTab', 'journal');
+      const subjectRow = journalRows.find((row) =>
+        row.cells.some((cell) => cell.lessonId === lessonId && cell.workId === workId)
+      );
+      const subject = subjects.find((s) => s.name === subjectRow?.name);
+      if (!subject) return;
+      navigate(`/student/work/${workId}/${user.groupId}/${subject.id}/${lessonId}`);
+    };
+
     return (
       <div className="journal-section">
-        <JournalTable header={journalDates} rows={journalRows} summaryLabel="Средний" />
-        <p className="hint-text">Журнал показывает предметы слева и отметки, пропуски, опоздания, зачеты по датам.</p>
+        <JournalTable
+          header={journalDates}
+          rows={journalRows}
+          summaryLabel="Средний"
+          onHeaderWorkButtonClick={openStudentWork}
+          workHeaderMode="view-only"
+        />
+        <p className="hint-text">Журнал показывает предметы слева и отметки, пропуски, опоздания, зачеты по датам. Наведите на дату с работой для перехода.</p>
       </div>
     );
-  }, [journalDates, journalRows, loading, error]);
+  }, [journalDates, journalRows, loading, error, navigate, user?.groupId, subjects]);
 
   return (
     <div className="page student-page">

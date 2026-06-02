@@ -6,6 +6,11 @@ export interface WorkFile {
   uploadedAt: string;
 }
 
+export interface WorkSolutionSummary {
+  id: number;
+  studentName: string;
+}
+
 export interface WorkData {
   id: number;
   title: string;
@@ -15,7 +20,8 @@ export interface WorkData {
   updatedAt?: string;
   files: WorkFile[];
   lessonId: number;
-  courseId: number;
+  solutionId?: number | null;
+  solutions?: WorkSolutionSummary[];
 }
 
 export interface CreateWorkDTO {

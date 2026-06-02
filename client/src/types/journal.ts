@@ -39,4 +39,5 @@ export interface JournalCell {
   lateId?: number;
   credit?: boolean;
   creditId?: number;
+  workId?: number | null;
 }

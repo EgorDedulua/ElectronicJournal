@@ -16,7 +16,7 @@ export const validate = (
 
         if (error) {
             const message = error.details.map(d => d.message).join(', ');
-            return res.status(400).json({ error: message })
+            return res.status(400).json({ error: message, message })
         }
 
         req[target] = value;

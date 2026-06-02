@@ -25,8 +25,10 @@ select {
 }
 
 select {
-  padding-right: 28px;
-  background-position: right 8px center;
+  appearance: none;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 12px center;
   background-repeat: no-repeat;
   background-size: 12px;
 }
@@ -200,12 +202,16 @@ label {
 input,
 select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid #30363d;
   background: #0d1117;
   color: #c9d1d9;
   font-size: 0.95rem;
+}
+
+.form-grid select {
+  padding-right: 2.75rem;
 }
 
 input:focus,
@@ -427,8 +433,24 @@ select:focus {
   font-size: 0.95rem;
   color: #c9d1d9;
   display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
   align-items: center;
   gap: 8px;
+}
+
+.checkbox-label > input[type='checkbox'] {
+  width: auto;
+  min-width: auto;
+  height: auto;
+  min-height: auto;
+  padding: 0;
+  margin: 0 8px 0 -2px;
+  flex: 0 0 auto;
+}
+
+.checkbox-text {
+  line-height: 1.2;
 }
 
 .journal-credit-cell {
@@ -439,45 +461,92 @@ select:focus {
   background: rgba(255, 100, 100, 0.18);
 }
 
-.day-header-with-work {
-  position: relative;
+.day-header {
+  padding: 6px 4px;
+  vertical-align: middle;
 }
 
-.day-header-work-button {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  background: rgba(88, 166, 255, 0.8);
-  border: 1px solid #58a6ff;
-  color: #0d1117;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 50%;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+.day-header-inner {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  line-height: 1;
-  margin-top: -10px;
-  margin-left: -10px;
+  /* Важно: не центрируем вертикально весь блок, иначе кнопка визуально
+     "проваливается" в центр ячейки относительно числа даты. */
+  justify-content: flex-start;
+  gap: 4px;
+  min-height: 44px;
 }
 
-.day-header-with-work:hover .day-header-work-button {
+.day-header-number {
+  display: block;
+  line-height: 1.2;
+}
+
+.day-header-with-work .day-header-work-button {
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.day-header-with-work:hover .day-header-work-button,
+.day-header-with-work:focus-within .day-header-work-button {
   opacity: 1;
 }
 
+.day-header-work-button {
+  position: static;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0;
+  margin: 0;
+  background: #1a1a1a;
+  border: 1px solid #404040;
+  color: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.day-header-work-button-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .day-header-work-button:hover {
-  background: #58a6ff;
-  border-color: #79c0ff;
+  background: #2d2d2d;
+  border-color: #555555;
 }
 
 .day-header-work-button:active {
   opacity: 0.9;
+}
+
+.day-header.day-header-has-work {
+  background-color: rgba(88, 166, 255, 0.18) !important;
+  color: #c9d1d9;
+  font-weight: 500;
+}
+
+.day-header-work-view {
+  background: #1a1a1a;
+  border-color: #404040;
+  color: white;
+}
+
+.day-header-work-view:hover {
+  background: #2d2d2d;
+  border-color: #555555;
 }
 
 .journal-cell,
@@ -858,7 +927,7 @@ select:focus {
 .upload-zone {
   border: 2px dashed #30363d;
   border-radius: 8px;
-  padding: 24px;
+  padding: 28px 20px;
   text-align: center;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -883,6 +952,19 @@ select:focus {
 .upload-text {
   color: #c9d1d9;
   margin-bottom: 8px;
+}
+
+.upload-input-hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.upload-zone-clickable {
+  cursor: pointer;
 }
 
 .upload-link {
@@ -1017,6 +1099,50 @@ select:focus {
   color: #8b949e;
   border-radius: 4px;
   margin-bottom: 4px;
+}
+
+.comment-reply-preview {
+  background: #21262d;
+  border-left: 3px solid #6e7681;
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 100%;
+}
+
+.comment-reply-preview-author {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #58a6ff;
+}
+
+.comment-reply-preview-text {
+  font-size: 0.85rem;
+  color: #8b949e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comment-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.comment-compose textarea {
+  width: 100%;
+  background: #161b22;
+  border: 1px solid #21262d;
+  color: #c9d1d9;
+  padding: 8px;
+  border-radius: 4px;
+  font-family: inherit;
+  resize: vertical;
 }
 
 .comment-header {
@@ -1222,6 +1348,22 @@ select:focus {
   gap: 16px;
   align-items: center;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.work-page-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.work-form-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
 }
 
 .back-button {
@@ -1246,6 +1388,120 @@ select:focus {
   font-size: 1.5rem;
 }
 
+.work-page,
+.solution-review-page {
+  padding-top: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  color: #8b949e;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group textarea {
+  background: #161b22;
+  border: 1px solid #21262d;
+  color: #c9d1d9;
+  padding: 8px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+.work-create-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.work-create-modal {
+  max-width: 520px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.work-create-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.work-page-title {
+  margin: 0 0 12px;
+  color: #f8fafc;
+  font-size: 1.4rem;
+}
+
+.solution-item-button {
+  width: 100%;
+  text-align: left;
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.solution-item-button:hover {
+  border-color: #58a6ff;
+}
+
+.work-files-column .file-list,
+.work-sidebar .file-list {
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #21262d;
+}
+
+.file-item-name {
+  color: #c9d1d9;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 2px;
+}
+
+.file-item-marked-delete .file-item-name {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .work-page-layout,
 .solution-review-layout {
   display: grid;
@@ -1253,11 +1509,19 @@ select:focus {
   gap: 16px;
 }
 
+.student-solution-page .work-page-layout {
+  grid-template-columns: 1fr 2fr;
+}
+
+.solution-upload-submit {
+  margin-top: 8px;
+}
+
 .work-files-column,
 .solution-files-column {
   border: 1px solid #21262d;
   border-radius: 8px;
-  padding: 16px;
+  padding: 18px 16px;
   background: #0b0f14;
 }
 
@@ -1278,7 +1542,7 @@ select:focus {
 .grading-panel {
   border: 1px solid #21262d;
   border-radius: 8px;
-  padding: 16px;
+  padding: 18px 16px;
   background: #0b0f14;
 }
 
@@ -1318,9 +1582,27 @@ select:focus {
 .no-solutions {
   color: #8b949e;
   text-align: center;
-  padding: 20px;
+  padding: 16px 14px;
+  margin-top: 12px;
   background: #161b22;
   border-radius: 6px;
+}
+
+.work-files-column > .no-files:first-child,
+.work-files-column .file-upload-area + .no-files {
+  margin-top: 0;
+}
+
+.work-files-column h3 + .no-files {
+  margin-top: 8px;
+}
+
+.work-files-column .file-upload-area {
+  margin-top: 8px;
+}
+
+.work-files-column h3 {
+  padding: 0 2px;
 }
 
 .solutions-list {

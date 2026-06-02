@@ -12,15 +12,16 @@ import teacherRouter from './routers/teacherRouter';
 import path from 'path';
 import fs from 'fs/promises';
 
-['uploads/works', 'uploads/solutions'].forEach(async (dir) => {
-    const fullPath = path.resolve(process.cwd(), dir);
-    try {
-        await fs.access(fullPath);
-        await fs.mkdir(fullPath, { recursive: true });
-    } catch (err) {
-        console.error(`Ошибка создания директории ${fullPath}:`, err)
+void (async () => {
+    for (const dir of ['uploads/works', 'uploads/solutions']) {
+        const fullPath = path.resolve(process.cwd(), dir);
+        try {
+            await fs.mkdir(fullPath, { recursive: true });
+        } catch (err) {
+            console.error(`Ошибка создания директории ${fullPath}:`, err);
+        }
     }
-});
+})();
 
 const app: Application = express();
 const PORT = config.PORT;

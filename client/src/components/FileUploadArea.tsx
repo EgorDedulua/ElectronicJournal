@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useId, useRef } from 'react';
 
 interface File {
   id: number;
@@ -24,6 +24,8 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
   maxFiles = 10,
 }) => {
   const [dragOver, setDragOver] = useState(false);
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -37,21 +39,34 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     setDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOver(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragOver(false);
 
-    if (onFilesSelected && e.dataTransfer.files) {
-      onFilesSelected(e.dataTransfer.files);
-    }
-  }, [onFilesSelected]);
+      if (onFilesSelected && e.dataTransfer.files.length > 0) {
+        onFilesSelected(e.dataTransfer.files);
+      }
+    },
+    [onFilesSelected]
+  );
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (onFilesSelected && e.target.files) {
-      onFilesSelected(e.target.files);
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (onFilesSelected && e.target.files && e.target.files.length > 0) {
+        onFilesSelected(e.target.files);
+      }
+      e.target.value = '';
+    },
+    [onFilesSelected]
+  );
+
+  const openFilePicker = () => {
+    if (!isLoading && canAddMoreFiles) {
+      inputRef.current?.click();
     }
-  }, [onFilesSelected]);
+  };
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
@@ -65,33 +80,53 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
 
   return (
     <div className="file-upload-area">
+      <input
+        ref={inputRef}
+        id={inputId}
+        type="file"
+        multiple
+        className="upload-input-hidden"
+        onChange={handleFileInput}
+        disabled={isLoading || !canAddMoreFiles}
+      />
       <div
-        className={`upload-zone ${dragOver ? 'drag-over' : ''}`}
+        className={`upload-zone ${dragOver ? 'drag-over' : ''} ${canAddMoreFiles ? 'upload-zone-clickable' : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onClick={openFilePicker}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openFilePicker();
+          }
+        }}
+        role={canAddMoreFiles ? 'button' : undefined}
+        tabIndex={canAddMoreFiles ? 0 : undefined}
       >
         {canAddMoreFiles ? (
           <>
             <div className="upload-icon">📁</div>
             <div className="upload-text">
-              Перетащите файлы сюда или <label className="upload-link">выберите файлы</label>
-              <input
-                type="file"
-                multiple
-                onChange={handleFileInput}
-                style={{ display: 'none' }}
-                disabled={isLoading}
-              />
+              Перетащите файлы сюда или{' '}
+              <span
+                className="upload-link"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openFilePicker();
+                }}
+                onKeyDown={(e) => e.stopPropagation()}
+                role="presentation"
+              >
+                выберите файлы
+              </span>
             </div>
             <div className="upload-hint">
-              Максимум {maxFiles} файлов, {files.length} загружено
+              Доступные расширения: .pdf, .png, .jpg, .jpeg, .zip, .doc, .docx, .xls, .xlsx. Максимум {maxFiles} файлов, загружено: {files.length}
             </div>
           </>
         ) : (
-          <div className="upload-full">
-            Достигнут максимум файлов ({maxFiles})
-          </div>
+          <div className="upload-full">Достигнут максимум файлов ({maxFiles})</div>
         )}
       </div>
 
@@ -105,6 +140,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
                 <div className="file-size">{formatFileSize(file.size)}</div>
               </div>
               <button
+                type="button"
                 className="file-delete-btn"
                 onClick={() => onFileDeleted?.(file.id)}
                 disabled={isLoading}

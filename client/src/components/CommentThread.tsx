@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { CommentWithReplies, CreateCommentDTO, UpdateCommentDTO } from '../types';
+import { CommentBase, CreateCommentDTO, UpdateCommentDTO } from '../types/comment';
+import { formatUserRole } from '../utils/roleLabels';
 
 interface CommentThreadProps {
-  comments: CommentWithReplies[];
+  comments: CommentBase[];
   isLoading?: boolean;
   canReply?: boolean;
   canEdit?: (authorId: number) => boolean;
@@ -11,13 +12,12 @@ interface CommentThreadProps {
   onEdit?: (commentId: number, data: UpdateCommentDTO) => Promise<void>;
   onDelete?: (commentId: number) => Promise<void>;
   currentUserId?: number;
-  maxDepth?: number;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 interface CommentItemProps {
-  comment: CommentWithReplies;
-  depth: number;
-  maxDepth: number;
+  comment: CommentBase;
   isLoading: boolean;
   canReply: boolean;
   canEdit: (authorId: number) => boolean;
@@ -30,8 +30,6 @@ interface CommentItemProps {
 
 const CommentItem: React.FC<CommentItemProps> = ({
   comment,
-  depth,
-  maxDepth,
   isLoading,
   canReply,
   canEdit,
@@ -70,21 +68,21 @@ const CommentItem: React.FC<CommentItemProps> = ({
     }
   };
 
-  const canUserEdit = currentUserId && canEdit(comment.author.id);
-  const canUserDelete = currentUserId && canDelete(comment.author.id);
-  const canUserReply = canReply && depth < maxDepth;
+  const canUserEdit = currentUserId != null && canEdit(comment.author.id);
+  const canUserDelete = currentUserId != null && canDelete(comment.author.id);
 
   return (
-    <div className={`comment-item comment-depth-${depth}`}>
+    <div className="comment-item">
       {comment.parent && (
-        <div className="comment-parent-bar">
-          Ответ на: <strong>{comment.parent.author.fullName}</strong> — {comment.parent.text.substring(0, 50)}...
+        <div className="comment-reply-preview">
+          <span className="comment-reply-preview-author">{comment.parent.author.fullName}</span>
+          <span className="comment-reply-preview-text">{comment.parent.text}</span>
         </div>
       )}
 
       <div className="comment-header">
         <div className="comment-author">{comment.author.fullName}</div>
-        <div className="comment-role">{comment.author.role}</div>
+        <div className="comment-role">{formatUserRole(comment.author.role)}</div>
         <div className="comment-date">
           {new Date(comment.createdAt).toLocaleString('ru-RU')}
         </div>
@@ -101,10 +99,10 @@ const CommentItem: React.FC<CommentItemProps> = ({
             rows={3}
           />
           <div className="comment-edit-buttons">
-            <button onClick={handleEditSubmit} disabled={isSubmitting || isLoading}>
+            <button type="button" onClick={handleEditSubmit} disabled={isSubmitting || isLoading}>
               Сохранить
             </button>
-            <button onClick={() => setEditOpen(false)} disabled={isSubmitting || isLoading}>
+            <button type="button" onClick={() => setEditOpen(false)} disabled={isSubmitting || isLoading}>
               Отмена
             </button>
           </div>
@@ -112,8 +110,9 @@ const CommentItem: React.FC<CommentItemProps> = ({
       )}
 
       <div className="comment-actions">
-        {canUserReply && (
+        {canReply && (
           <button
+            type="button"
             className="comment-action-btn"
             onClick={() => setReplyOpen(!replyOpen)}
             disabled={isLoading}
@@ -123,6 +122,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
         )}
         {canUserEdit && (
           <button
+            type="button"
             className="comment-action-btn"
             onClick={() => setEditOpen(!editOpen)}
             disabled={isLoading}
@@ -132,6 +132,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
         )}
         {canUserDelete && (
           <button
+            type="button"
             className="comment-action-btn danger"
             onClick={() => onDelete(comment.id)}
             disabled={isLoading}
@@ -151,34 +152,13 @@ const CommentItem: React.FC<CommentItemProps> = ({
             rows={2}
           />
           <div className="comment-reply-buttons">
-            <button onClick={handleReplySubmit} disabled={isSubmitting || isLoading}>
+            <button type="button" onClick={handleReplySubmit} disabled={isSubmitting || isLoading}>
               Отправить
             </button>
-            <button onClick={() => setReplyOpen(false)} disabled={isSubmitting || isLoading}>
+            <button type="button" onClick={() => setReplyOpen(false)} disabled={isSubmitting || isLoading}>
               Отмена
             </button>
           </div>
-        </div>
-      )}
-
-      {comment.replies && comment.replies.length > 0 && (
-        <div className="comment-replies">
-          {comment.replies.map((reply) => (
-            <CommentItem
-              key={reply.id}
-              comment={reply}
-              depth={depth + 1}
-              maxDepth={maxDepth}
-              isLoading={isLoading}
-              canReply={canReply}
-              canEdit={canEdit}
-              canDelete={canDelete}
-              onAdd={onAdd}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              currentUserId={currentUserId}
-            />
-          ))}
         </div>
       )}
     </div>
@@ -195,19 +175,52 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   onEdit = async () => {},
   onDelete = async () => {},
   currentUserId,
-  maxDepth = 3,
+  hasMore = false,
+  onLoadMore,
 }) => {
+  const [newCommentText, setNewCommentText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleNewComment = async () => {
+    if (!newCommentText.trim()) return;
+    setIsSubmitting(true);
+    try {
+      await onAdd({ text: newCommentText });
+      setNewCommentText('');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="comment-thread">
-      {comments.length === 0 ? (
+      {canReply && (
+        <div className="comment-compose">
+          <textarea
+            value={newCommentText}
+            onChange={(e) => setNewCommentText(e.target.value)}
+            placeholder="Написать комментарий..."
+            disabled={isLoading || isSubmitting}
+            rows={2}
+          />
+          <button
+            type="button"
+            className="button button-primary button-small"
+            onClick={handleNewComment}
+            disabled={isLoading || isSubmitting || !newCommentText.trim()}
+          >
+            Отправить
+          </button>
+        </div>
+      )}
+
+      {comments.length === 0 && !isLoading ? (
         <div className="no-comments">Нет комментариев</div>
       ) : (
         comments.map((comment) => (
           <CommentItem
             key={comment.id}
             comment={comment}
-            depth={0}
-            maxDepth={maxDepth}
             isLoading={isLoading}
             canReply={canReply}
             canEdit={canEdit}
@@ -218,6 +231,12 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             currentUserId={currentUserId}
           />
         ))
+      )}
+
+      {hasMore && onLoadMore && (
+        <button type="button" className="button button-secondary button-block" onClick={onLoadMore} disabled={isLoading}>
+          Загрузить ещё
+        </button>
       )}
     </div>
   );

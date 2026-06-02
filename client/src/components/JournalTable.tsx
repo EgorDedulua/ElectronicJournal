@@ -1,14 +1,7 @@
 import { useMemo, MouseEvent } from 'react';
 import { JournalCell } from '../types';
+import { lessonTypeLabels } from '../types/lesson';
 import { groupDatesByYearMonth } from '../utils/monthNames';
-
-const lessonTypeLabels: Record<string, string> = {
-  lab: 'Лабораторная',
-  practice: 'Практика',
-  usual: 'Урок',
-  test: 'Тест',
-  control: 'Контрольная'
-};
 
 interface JournalTableRow {
   name: string;
@@ -26,21 +19,48 @@ interface JournalTableProps<RowType extends JournalTableRow = JournalTableRow> {
   onCellClick?: (row: RowType, date: string, cell?: JournalCell) => void;
   onCellAuxClick?: (row: RowType, date: string, cell: JournalCell | undefined, button: number) => void;
   onCellContextMenu?: (row: RowType, date: string, cell: JournalCell | undefined, event: MouseEvent<HTMLTableCellElement>) => void;
-  onWorkButtonClick?: (row: RowType, date: string, cell?: JournalCell) => void;
-  onHeaderWorkButtonClick?: (date: string) => void;
+  onHeaderWorkButtonClick?: (date: string, workId?: number | null, lessonId?: number) => void;
+  /** view-only: кнопка только если есть workId (для студента) */
+  workHeaderMode?: 'create-or-view' | 'view-only';
 }
 
-const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({ header, rows, rowLabel = 'Предмет', summaryLabel, onCellClick, onCellAuxClick, onCellContextMenu, onWorkButtonClick, onHeaderWorkButtonClick }: JournalTableProps<RowType>) => {
+const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
+  header,
+  rows,
+  rowLabel = 'Предмет',
+  summaryLabel,
+  onCellClick,
+  onCellAuxClick,
+  onCellContextMenu,
+  onHeaderWorkButtonClick,
+  workHeaderMode = 'create-or-view',
+}: JournalTableProps<RowType>) => {
   const dateGroups = useMemo(() => groupDatesByYearMonth(header), [header]);
-  
-  // Создаем плоский список дат для маппинга cells
+
   const flatDates = useMemo(() => {
-    return dateGroups.flatMap(yearGroup =>
-      yearGroup.months.flatMap(monthGroup =>
-        monthGroup.days.map(day => day.date)
-      )
+    return dateGroups.flatMap((yearGroup) =>
+      yearGroup.months.flatMap((monthGroup) => monthGroup.days.map((day) => day.date))
     );
   }, [dateGroups]);
+
+  /** Метаданные по индексу колонки (одна колонка = один урок, даже при одинаковой дате) */
+  const columnMeta = useMemo(() => {
+    return flatDates.map((date, index) => {
+      // Для студента строки (предметы) имеют разные workId по колонкам.
+      // Берём приоритетно ячейку, где есть workId, иначе любую с lessonId.
+      const cellsAtColumn = rows.map((row) => row.cells[index]).filter(Boolean);
+      const cellWithWork = cellsAtColumn.find((cell) => cell?.workId != null);
+      const fallbackCell = cellsAtColumn.find((cell) => cell?.lessonId != null);
+      const cell = cellWithWork ?? fallbackCell;
+      return {
+        date,
+        lessonId: cell?.lessonId,
+        workId: cell?.workId,
+      };
+    });
+  }, [rows, flatDates]);
+
+  let headerColumnIndex = 0;
 
   return (
     <div className="journal-table-wrapper">
@@ -49,7 +69,11 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({ heade
           <tr>
             <th rowSpan={3}>{rowLabel}</th>
             {dateGroups.map((yearGroup) => (
-              <th key={`year-${yearGroup.year}`} colSpan={yearGroup.months.reduce((sum, m) => sum + m.days.length, 0)} className="year-header">
+              <th
+                key={`year-${yearGroup.year}`}
+                colSpan={yearGroup.months.reduce((sum, m) => sum + m.days.length, 0)}
+                className="year-header"
+              >
                 {yearGroup.year}
               </th>
             ))}
@@ -62,7 +86,11 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({ heade
           <tr>
             {dateGroups.map((yearGroup) =>
               yearGroup.months.map((monthGroup) => (
-                <th key={`month-${yearGroup.year}-${monthGroup.month}`} colSpan={monthGroup.days.length} className="month-header">
+                <th
+                  key={`month-${yearGroup.year}-${monthGroup.month}`}
+                  colSpan={monthGroup.days.length}
+                  className="month-header"
+                >
                   {monthGroup.monthName}
                 </th>
               ))
@@ -71,24 +99,40 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({ heade
           <tr>
             {dateGroups.map((yearGroup) =>
               yearGroup.months.map((monthGroup) =>
-                monthGroup.days.map((day, index) => (
-                  <th key={`day-${day.date}-${index}`} className={`day-header ${onHeaderWorkButtonClick ? 'day-header-with-work' : ''}`}>
-                    {day.day}
-                    {onHeaderWorkButtonClick && (
-                      <button
-                        className="day-header-work-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onHeaderWorkButtonClick(day.date);
-                        }}
-                        title="Добавить работу"
-                        aria-label="Добавить работу"
-                      >
-                        +
-                      </button>
-                    )}
-                  </th>
-                ))
+                monthGroup.days.map((day) => {
+                  const colIndex = headerColumnIndex++;
+                  const meta = columnMeta[colIndex];
+                  const workId = meta?.workId;
+                  const lessonId = meta?.lessonId;
+                  const hasWork = workId != null;
+
+                  return (
+                    <th
+                      key={`col-${colIndex}-${lessonId ?? day.date}`}
+                      className={`day-header ${hasWork ? 'day-header-has-work' : ''} ${onHeaderWorkButtonClick ? 'day-header-with-work' : ''}`}
+                    >
+                      <div className="day-header-inner">
+                        <span className="day-header-number">{day.day}</span>
+                        {onHeaderWorkButtonClick && (workHeaderMode !== 'view-only' || hasWork) && (
+                          <button
+                            type="button"
+                            className={`day-header-work-button ${hasWork ? 'day-header-work-view' : 'day-header-work-create'}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onHeaderWorkButtonClick(day.date, workId, lessonId);
+                            }}
+                            title={hasWork ? 'Перейти к работе' : 'Добавить работу'}
+                            aria-label={hasWork ? 'Перейти к работе' : 'Добавить работу'}
+                          >
+                            <span className="day-header-work-button-icon" aria-hidden="true">
+                              {hasWork ? '→' : '+'}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })
               )
             )}
           </tr>
@@ -104,12 +148,15 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({ heade
                 const cell = row.cells[cellIndex];
                 const isDisabled = row.isExpelled;
                 const hasCredit = Boolean(cell?.credit && ['lab', 'practice'].includes(cell.lessonType ?? ''));
-                const isLabOrPracticeWithoutCredit = (cell?.lessonType === 'lab' || cell?.lessonType === 'practice') && !cell?.credit;
-                const lessonTypeLabel = cell?.lessonType ? lessonTypeLabels[cell.lessonType] ?? cell.lessonType : undefined;
+                const isLabOrPracticeWithoutCredit =
+                  (cell?.lessonType === 'lab' || cell?.lessonType === 'practice') && !cell?.credit;
+                const lessonTypeLabel = cell?.lessonType
+                  ? lessonTypeLabels[cell.lessonType] ?? cell.lessonType
+                  : undefined;
 
                 return (
-                  <td 
-                    key={`${row.name}-${date}-${cellIndex}`} 
+                  <td
+                    key={`${row.name}-col-${cellIndex}-${cell?.lessonId ?? date}`}
                     className={`journal-cell ${row.isExpelled ? 'cell-expelled' : ''} ${hasCredit ? 'journal-credit-cell' : ''} ${isLabOrPracticeWithoutCredit ? 'journal-lab-practice-no-credit' : ''} ${onCellClick && !isDisabled ? 'journal-cell-clickable' : ''}`}
                     onClick={() => !isDisabled && onCellClick?.(row, date, cell)}
                     onMouseDown={(event) => {
@@ -138,9 +185,7 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({ heade
                   </td>
                 );
               })}
-              {summaryLabel && (
-                <td className="summary-cell">{row.summary ?? '-'}</td>
-              )}
+              {summaryLabel && <td className="summary-cell">{row.summary ?? '-'}</td>}
             </tr>
           ))}
         </tbody>

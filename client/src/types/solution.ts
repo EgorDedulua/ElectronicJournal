@@ -6,29 +6,16 @@ export interface SolutionFile {
   uploadedAt: string;
 }
 
-export interface SolutionStudent {
-  id: number;
-  fullName: string;
-}
-
 export interface SolutionData {
   id: number;
   workId: number;
   studentId: number;
-  student: SolutionStudent;
+  studentName: string;
   files: SolutionFile[];
   createdAt: string;
   updatedAt?: string;
 }
 
-export interface CreateSolutionDTO {
-  workId: number;
-}
-
 export interface UpdateSolutionDTO {
   deleteFileIds?: number[];
-}
-
-export interface SolutionWithStudentInfo extends SolutionData {
-  studentName: string;
 }
