@@ -25,6 +25,7 @@ interface JournalTableProps<RowType extends JournalTableRow = JournalTableRow> {
   workHeaderMode?: 'create-or-view' | 'view-only';
   onCellWorkClick?: (row: RowType, cell: JournalCell) => void;
   showCellWorkButton?: boolean;
+  onHeaderDeleteLessonClick?: (lessonId: number, date: string) => void;
 }
 
 const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
@@ -39,6 +40,7 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
   workHeaderMode = 'create-or-view',
   onCellWorkClick,
   showCellWorkButton = false,
+  onHeaderDeleteLessonClick,
 }: JournalTableProps<RowType>) => {
   const dateGroups = useMemo(() => groupDatesByYearMonth(header), [header]);
 
@@ -113,12 +115,29 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
                     (row) => row.cells[colIndex]?.workId != null
                   );
 
+                  const canDeleteLesson =
+                    Boolean(onHeaderDeleteLessonClick && lessonId != null);
+
                   return (
                     <th
                       key={`col-${colIndex}-${lessonId ?? day.date}`}
-                      className={`day-header ${columnHasWork ? 'day-header-has-work' : ''} ${onHeaderWorkButtonClick ? 'day-header-with-work' : ''}`}
+                      className={`day-header ${columnHasWork ? 'day-header-has-work' : ''} ${onHeaderWorkButtonClick ? 'day-header-with-work' : ''} ${canDeleteLesson ? 'day-header-deletable' : ''}`}
                     >
                       <div className="day-header-inner">
+                        {canDeleteLesson && (
+                          <button
+                            type="button"
+                            className="day-header-delete-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onHeaderDeleteLessonClick!(lessonId!, day.date);
+                            }}
+                            title="Удалить урок"
+                            aria-label="Удалить урок"
+                          >
+                            🗑
+                          </button>
+                        )}
                         <span className="day-header-number">{day.day}</span>
                         {onHeaderWorkButtonClick && (workHeaderMode !== 'view-only' || columnHasWork) && (
                           <button

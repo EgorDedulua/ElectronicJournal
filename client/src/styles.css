@@ -541,6 +541,10 @@ select:focus {
   vertical-align: middle;
 }
 
+.day-header-deletable {
+  position: relative;
+}
+
 .day-header-inner {
   display: flex;
   flex-direction: column;
@@ -550,6 +554,46 @@ select:focus {
   justify-content: flex-start;
   gap: 4px;
   min-height: 44px;
+  position: relative;
+  width: 100%;
+}
+
+.day-header-delete-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #f85149;
+  border-radius: 4px;
+  background: rgba(248, 81, 73, 0.15);
+  color: #f85149;
+  font-size: 0.65rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.day-header-deletable:hover .day-header-delete-button,
+.day-header-deletable:focus-within .day-header-delete-button {
+  opacity: 1;
+}
+
+.day-header-delete-button:hover {
+  background: rgba(248, 81, 73, 0.35);
+}
+
+.day-header-delete-button:active {
+  opacity: 0.9;
 }
 
 .day-header-number {

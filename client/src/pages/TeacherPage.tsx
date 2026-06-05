@@ -443,6 +443,50 @@ const TeacherPage = () => {
     sessionStorage.setItem('teacherActiveTab', 'journal');
   };
 
+  const handleDeleteLesson = useCallback(
+    async (lessonId: number) => {
+      if (selectedGroup === null || selectedSubject === null) return;
+
+      const lesson = lessons.find((l) => l.id === lessonId);
+      const dateLabel = lesson?.date ? lesson.date.substring(0, 10) : '';
+
+      if (
+        !window.confirm(
+          `Удалить урок${dateLabel ? ` от ${dateLabel}` : ''}? Будут удалены все отметки, работа, пропуски, опоздания и зачёты по этому уроку.`
+        )
+      ) {
+        return;
+      }
+
+      setLoading(true);
+      setError('');
+      try {
+        await httpClient.delete(
+          `/teacher/groups/${selectedGroup}/subjects/${selectedSubject}/lessons/${lessonId}`
+        );
+        await loadTeacherJournal();
+      } catch (err: unknown) {
+        const message =
+          err &&
+          typeof err === 'object' &&
+          'response' in err &&
+          err.response &&
+          typeof err.response === 'object' &&
+          'data' in err.response &&
+          err.response.data &&
+          typeof err.response.data === 'object' &&
+          'message' in err.response.data &&
+          typeof err.response.data.message === 'string'
+            ? err.response.data.message
+            : 'Не удалось удалить урок';
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedGroup, selectedSubject, lessons, loadTeacherJournal]
+  );
+
   const openWorkPageFromHeader = (_date: string, workId?: number | null, lessonId?: number) => {
     if (!selectedGroup || !selectedSubject) return;
 
@@ -610,9 +654,11 @@ const TeacherPage = () => {
           } : undefined}
           onCellContextMenu={canEditSubject ? (row, date, cell) => toggleAbsenceCell(row, date, cell as TeacherJournalCell) : undefined}
           onHeaderWorkButtonClick={canEditSubject ? openWorkPageFromHeader : undefined}
+          onHeaderDeleteLessonClick={canEditSubject ? handleDeleteLesson : undefined}
         />
         <p className="hint-text">
           Левый клик — оценка, средний клик — опоздание, правый клик — отсутствие.
+          {canEditSubject && ' Наведите на дату урока — удаление урока (🗑) или работа (+/→).'}
           {!canEditSubject && ' Этот предмет доступен только для просмотра.'}
         </p>
 
@@ -717,7 +763,7 @@ const TeacherPage = () => {
 
       </div>
     );
-  }, [selectedGroup, selectedSubject, journalDates, journalRows, groups, subjects, loading, error, activeCell, markValue, lateMinutes, autoLate, modalLoading, modalError, isLessonModalOpen, lessonDate, lessonType, lessonTopic, lessonModalError, lessonModalLoading, lessons]);
+  }, [selectedGroup, selectedSubject, journalDates, journalRows, groups, subjects, groupCurator, loading, error, activeCell, markValue, lateMinutes, autoLate, modalLoading, modalError, isLessonModalOpen, lessonDate, lessonType, lessonTopic, lessonModalError, lessonModalLoading, lessons, canEditSubject, openJournalCell, openLateCell, toggleAbsenceCell, openWorkPageFromHeader, handleDeleteLesson, openLessonModal, closeModal, submitMark, deleteMark, submitLate, submitAbsence, toggleCredit, loadTeacherJournal]);
 
   return (
     <div className="page teacher-page">

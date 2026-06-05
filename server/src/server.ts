@@ -11,6 +11,7 @@ import studentRouter from './routers/studentRouter';
 import teacherRouter from './routers/teacherRouter';
 import path from 'path';
 import fs from 'fs/promises';
+import fileRouter from './routers/fileRouter';
 
 void (async () => {
     for (const dir of ['uploads/works', 'uploads/solutions']) {
@@ -31,6 +32,7 @@ app.use('/api', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/student', studentRouter);
 app.use('/api/teacher', teacherRouter);
+app.use('/api/files', fileRouter);
 app.use(errorHandler);
 
 AppDataSource.initialize()
