@@ -83,7 +83,6 @@ const TeacherPage = () => {
       .then((response) => setGroups(response.data.data ?? response.data))
       .catch(() => setError('Не удалось загрузить группы'))
       .finally(() => {
-        // Restore journal state from sessionStorage if returning from work page
         const savedState = sessionStorage.getItem('journalReturnState');
         if (savedState) {
           try {
@@ -93,20 +92,17 @@ const TeacherPage = () => {
             if (savedTab === 'journal') setActiveTab('journal');
             sessionStorage.removeItem('journalReturnState');
           } catch (e) {
-            // Ignore parsing errors
           }
         }
       });
   }, []);
 
-  // Save selected group to sessionStorage
   useEffect(() => {
     if (selectedGroup !== null) {
       sessionStorage.setItem('teacherSelectedGroup', selectedGroup.toString());
     }
   }, [selectedGroup]);
 
-  // Save selected subject to sessionStorage
   useEffect(() => {
     if (selectedSubject !== null) {
       sessionStorage.setItem('teacherSelectedSubject', selectedSubject.toString());
@@ -656,12 +652,6 @@ const TeacherPage = () => {
           onHeaderWorkButtonClick={canEditSubject ? openWorkPageFromHeader : undefined}
           onHeaderDeleteLessonClick={canEditSubject ? handleDeleteLesson : undefined}
         />
-        <p className="hint-text">
-          Левый клик — оценка, средний клик — опоздание, правый клик — отсутствие.
-          {canEditSubject && ' Наведите на дату урока — удаление урока (🗑) или работа (+/→).'}
-          {!canEditSubject && ' Редактирование журнала и работ недоступно для этого предмета.'}
-        </p>
-
         {activeCell && (
           <div className="modal-backdrop" onClick={closeModal}>
             <div className="modal-card" onClick={(event) => event.stopPropagation()}>
@@ -831,7 +821,6 @@ const TeacherPage = () => {
         </div>
       </main>
 
-      {/* Lesson Modal - Always rendered, not dependent on journal state */}
       {isLessonModalOpen && (
         <div className="modal-backdrop" onClick={closeLessonModal}>
           <div className="modal-card" onClick={(event) => event.stopPropagation()}>

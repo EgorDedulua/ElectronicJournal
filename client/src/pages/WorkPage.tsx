@@ -244,7 +244,6 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
     const fixMojibakeFilename = (name: string): string => {
       if (!looksLikeMojibake(name)) return name;
       try {
-        // Восстанавливаем байты (как latin1-строку) и декодируем их как UTF-8.
         const bytes = new Uint8Array(Array.from(name, (ch) => ch.charCodeAt(0) & 0xff));
         return new TextDecoder('utf-8').decode(bytes);
       } catch {

@@ -142,8 +142,6 @@ export const SolutionReviewPage: React.FC = () => {
     setIsSubmitting(true);
     setModalError(null);
     try {
-      // Зачёт на бэкенде меняется автоматически от оценки (>= 3 для lab/practice).
-      // Здесь сохраняем оценку и затем перечитываем кредиты, чтобы UI всегда совпадал с сервером.
       if (existingMark) {
         const updated = await updateMark(gId, sId, lId, existingMark.id, mark);
         setExistingMark(updated);

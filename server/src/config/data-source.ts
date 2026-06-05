@@ -6,7 +6,7 @@ export const AppDataSource = new DataSource({
     type: 'postgres',
     url: config.DATABASE_URL,
     synchronize: false,
-    logging: true,
+    logging: false,
     namingStrategy: new SnakeNamingStrategy(),
     entities: [__dirname + '/../entities/**/*.ts'],
     migrations: [__dirname + '/../migrations/**/*.ts'],

@@ -177,10 +177,6 @@ const StudentPage = () => {
           showCellWorkButton
           onCellWorkClick={openStudentWork}
         />
-        <p className="hint-text">
-          Предметы слева, уроки по датам в столбцах. Наведите на ячейку с уроком — тема и тип занятия.
-          Кнопка «→» в ячейке открывает работу по этому предмету.
-        </p>
       </div>
     );
   }, [journalDates, journalRows, loading, error, navigate, user?.groupId]);

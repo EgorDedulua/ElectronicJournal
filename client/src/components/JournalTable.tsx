@@ -21,7 +21,6 @@ interface JournalTableProps<RowType extends JournalTableRow = JournalTableRow> {
   onCellAuxClick?: (row: RowType, date: string, cell: JournalCell | undefined, button: number) => void;
   onCellContextMenu?: (row: RowType, date: string, cell: JournalCell | undefined, event: MouseEvent<HTMLTableCellElement>) => void;
   onHeaderWorkButtonClick?: (date: string, workId?: number | null, lessonId?: number) => void;
-  /** view-only: кнопка только если есть workId (для студента) */
   workHeaderMode?: 'create-or-view' | 'view-only';
   onCellWorkClick?: (row: RowType, cell: JournalCell) => void;
   showCellWorkButton?: boolean;
@@ -50,7 +49,6 @@ const JournalTable = <RowType extends JournalTableRow = JournalTableRow>({
     );
   }, [dateGroups]);
 
-  /** Метаданные по индексу колонки (одна колонка = один урок, даже при одинаковой дате) */
   const columnMeta = useMemo(() => {
     return flatDates.map((date, index) => {
       const cellsAtColumn = rows

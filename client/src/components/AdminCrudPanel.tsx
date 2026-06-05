@@ -68,7 +68,6 @@ const AdminCrudPanel = ({ section }: AdminCrudPanelProps) => {
       setLoading(true);
       try {
         const params: Record<string, any> = { sort };
-        // Только отправляем searchString если он не пуст
         if (searchValue.trim()) {
           params.searchString = searchValue;
         }
@@ -124,7 +123,6 @@ const AdminCrudPanel = ({ section }: AdminCrudPanelProps) => {
 
   const loadItems = async () => {
     const params: Record<string, any> = { sort };
-    // Только отправляем searchString если он не пуст
     if (searchValue.trim()) {
       params.searchString = searchValue;
     }

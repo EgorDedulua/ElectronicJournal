@@ -688,6 +688,9 @@ select:focus {
 }
 
 .journal-cell-work-button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -722,6 +725,7 @@ select:focus {
   min-width: 50px;
   text-align: center;
   transition: background 150ms ease, transform 150ms ease;
+  position: relative;
 }
 
 .year-header {

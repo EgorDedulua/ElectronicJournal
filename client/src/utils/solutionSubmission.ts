@@ -19,7 +19,6 @@ export function wasSolutionEdited(solution: {
   return solution.updatedAt != null && solution.updatedAt !== '';
 }
 
-/** Работа: updatedAt позже createdAt (UpdateDateColumn при save). */
 export function wasEntityEdited(entity: {
   createdAt: string;
   updatedAt?: string | null;
@@ -41,7 +40,6 @@ export function getSolutionLastActivityAt(solution: {
   return new Date(solution.createdAt);
 }
 
-/** Конец календарного дня дедлайна (локальное время). */
 export function getDeadlineEnd(deadlineIso: string): Date {
   const end = new Date(deadlineIso);
   end.setHours(23, 59, 59, 999);
