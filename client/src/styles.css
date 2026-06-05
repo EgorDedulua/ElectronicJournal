@@ -1782,30 +1782,93 @@ select:focus {
   border-color: #58a6ff;
 }
 
+.solution-item.solution-item-button.solution-item-on-time {
+  background: rgba(63, 185, 80, 0.22);
+  border-color: rgba(63, 185, 80, 0.45);
+}
+
+.solution-item.solution-item-button.solution-item-on-time:hover {
+  background: rgba(63, 185, 80, 0.3);
+  border-color: rgba(63, 185, 80, 0.6);
+}
+
+.solution-item.solution-item-button.solution-item-late {
+  background: rgba(248, 81, 73, 0.18);
+  border-color: rgba(248, 81, 73, 0.4);
+}
+
+.solution-item.solution-item-button.solution-item-late:hover {
+  background: rgba(248, 81, 73, 0.26);
+  border-color: rgba(248, 81, 73, 0.55);
+}
+
+.solution-item-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
 .work-files-column .file-list,
 .work-sidebar .file-list {
   margin: 12px 0 0;
   padding: 0;
 }
 
-.file-item {
+.work-files-column .file-list .file-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 14px;
+  padding: 10px 12px 10px 14px;
   border-bottom: 1px solid #21262d;
 }
 
-.file-item-name {
+.work-files-column .file-list .file-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 2px;
+}
+
+.work-files-column .file-list .file-item-name {
   color: #c9d1d9;
   font-size: 0.9rem;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-left: 2px;
+  white-space: nowrap;
 }
 
-.file-item-marked-delete .file-item-name {
+.work-files-column .file-list .file-item-size {
+  color: #8b949e;
+  font-size: 0.8rem;
+}
+
+.work-files-column .file-list .file-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-right: 4px;
+}
+
+.work-files-column .file-list .file-download-btn {
+  min-width: 26px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.work-files-column .file-list .file-download-btn:hover:not(:disabled) {
+  border-color: #58a6ff;
+  color: #58a6ff;
+}
+
+.work-files-column .file-list .file-item-marked-delete .file-item-name {
   text-decoration: line-through;
   opacity: 0.5;
 }

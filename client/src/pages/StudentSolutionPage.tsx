@@ -14,6 +14,7 @@ import {
   updateSolution,
 } from '../api/worksApi';
 import EntityTimestampsMeta from '../components/EntityTimestampsMeta';
+import { FileList } from '../components/FileListItem';
 import SolutionSubmissionMeta from '../components/SolutionSubmissionMeta';
 import { getApiErrorMessage, logApiError } from '../utils/apiError';
 
@@ -201,32 +202,6 @@ export const StudentSolutionPage: React.FC = () => {
     }
   };
 
-  const renderFileList = (
-    files: { id: number; originalName: string }[],
-    markedForDelete: number[],
-    onToggleDelete?: (id: number) => void
-  ) => (
-    <ul className="file-list">
-      {files.map((file) => (
-        <li
-          key={file.id}
-          className={`file-item ${markedForDelete.includes(file.id) ? 'file-item-marked-delete' : ''}`}
-        >
-          <span className="file-item-name">{file.originalName}</span>
-          {onToggleDelete && (
-            <button
-              type="button"
-              className="button button-secondary button-small"
-              onClick={() => onToggleDelete(file.id)}
-            >
-              {markedForDelete.includes(file.id) ? 'Отменить' : 'Открепить'}
-            </button>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
-
   if (isLoading) {
     return <div className="page-loading">Загрузка...</div>;
   }
@@ -274,9 +249,17 @@ export const StudentSolutionPage: React.FC = () => {
             </>
           ) : (
             <>
-              {existingSolutionFiles.length > 0
-                ? renderFileList(existingSolutionFiles, deleteSolutionFileIds, toggleDeleteSolutionFile)
-                : <div className="no-files">Нет файлов</div>}
+              {existingSolutionFiles.length > 0 ? (
+                <FileList
+                  files={existingSolutionFiles}
+                  kind="solution"
+                  markedForDelete={deleteSolutionFileIds}
+                  onToggleDelete={toggleDeleteSolutionFile}
+                  downloadDisabled={isSubmitting}
+                />
+              ) : (
+                <div className="no-files">Нет файлов</div>
+              )}
               <FileUploadArea
                 files={pendingSolutionFiles}
                 onFilesSelected={(files) =>

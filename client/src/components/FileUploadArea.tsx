@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useId, useRef } from 'react';
+import { formatFileSize } from '../utils/formatFileSize';
 
 interface File {
   id: number;
@@ -66,14 +67,6 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
     if (!isLoading && canAddMoreFiles) {
       inputRef.current?.click();
     }
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
   const canAddMoreFiles = files.length < maxFiles;

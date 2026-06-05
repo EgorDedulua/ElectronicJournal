@@ -4,6 +4,7 @@ import { WorkData, WorkFile } from '../types/work';
 import { FileUploadArea } from '../components/FileUploadArea';
 import { CommentThread } from '../components/CommentThread';
 import { useComments } from '../hooks/useComments';
+import { useTeacherSubjectAccess } from '../hooks/useTeacherSubjectAccess';
 import { useAuth } from '../context/AuthContext';
 import {
   getTeacherWork,
@@ -13,7 +14,13 @@ import {
   deleteWork,
 } from '../api/worksApi';
 import EntityTimestampsMeta from '../components/EntityTimestampsMeta';
+import { FileList } from '../components/FileListItem';
 import { getApiErrorMessage, logApiError } from '../utils/apiError';
+import {
+  formatSolutionDateTime,
+  getSubmissionTimeliness,
+  wasSolutionEdited,
+} from '../utils/solutionSubmission';
 
 interface PendingFile {
   id: number;
@@ -59,6 +66,16 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
 
   const [studentSolutionId, setStudentSolutionId] = useState<number | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  const { canEdit: teacherCanEdit, isChecking: isCheckingTeacherAccess } =
+    useTeacherSubjectAccess({
+      groupId: gId,
+      subjectId: sId,
+      enabled: isTeacher && Boolean(gId && sId),
+    });
+
+  const isTeacherAccessPending =
+    isTeacher && (isCheckingTeacherAccess || teacherCanEdit !== true);
 
   const commentScope = useMemo(() => {
     if (isCreateMode || !wId) return null;
@@ -106,6 +123,10 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
       return;
     }
 
+    if (isTeacher && teacherCanEdit !== true) {
+      return;
+    }
+
     const loadWork = async () => {
       if (!gId || !sId || !lId || !wId) {
         setError('Неверные параметры');
@@ -134,7 +155,7 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
     };
 
     loadWork();
-  }, [isCreateMode, isTeacher, gId, sId, lId, wId]);
+  }, [isCreateMode, isTeacher, teacherCanEdit, gId, sId, lId, wId]);
 
   const handleCreateWork = async () => {
     if (!workTitle.trim() || !gId || !sId || !lId) {
@@ -250,31 +271,9 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
     );
   };
 
-  const renderFileList = (
-    files: { id: number; originalName: string }[],
-    markedForDelete: number[],
-    onToggleDelete?: (id: number) => void
-  ) => (
-    <ul className="file-list">
-      {files.map((file) => (
-        <li
-          key={file.id}
-          className={`file-item ${markedForDelete.includes(file.id) ? 'file-item-marked-delete' : ''}`}
-        >
-          <span className="file-item-name">{file.originalName}</span>
-          {onToggleDelete && (
-            <button
-              type="button"
-              className="button button-secondary button-small"
-              onClick={() => onToggleDelete(file.id)}
-            >
-              {markedForDelete.includes(file.id) ? 'Отменить' : 'Открепить'}
-            </button>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
+  if (isTeacherAccessPending) {
+    return <div className="page-loading">Загрузка...</div>;
+  }
 
   if (isLoading) {
     return <div className="page-loading">Загрузка...</div>;
@@ -404,11 +403,13 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
         <div className="work-files-column">
           <h3>Файлы работы</h3>
           {existingWorkFiles.length > 0 ? (
-            renderFileList(
-              existingWorkFiles,
-              deleteWorkFileIds,
-              canEditWork ? toggleDeleteWorkFile : undefined
-            )
+            <FileList
+              files={existingWorkFiles}
+              kind="work"
+              markedForDelete={deleteWorkFileIds}
+              onToggleDelete={canEditWork ? toggleDeleteWorkFile : undefined}
+              downloadDisabled={isSubmitting}
+            />
           ) : (
             <div className="no-files">Нет файлов</div>
           )}
@@ -514,11 +515,15 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
                   .sort((a, b) =>
                     a.studentName.localeCompare(b.studentName, 'ru', { sensitivity: 'base' })
                   )
-                  .map((sol) => (
+                  .map((sol) => {
+                  const timeliness = getSubmissionTimeliness(work.deadline, sol);
+                  return (
                   <button
                     key={sol.id}
                     type="button"
-                    className="solution-item solution-item-button"
+                    className={`solution-item solution-item-button${
+                      timeliness === 'on-time' ? ' solution-item-on-time' : ' solution-item-late'
+                    }`}
                     onClick={() =>
                       navigate(
                         `/teacher/solution/${sol.id}/${gId}/${sId}/${lId}/${wId}`
@@ -526,8 +531,19 @@ export const WorkPage: React.FC<WorkPageProps> = ({ isTeacher = false }) => {
                     }
                   >
                     <div className="solution-student">{sol.studentName}</div>
+                    <div className="solution-item-dates">
+                      <div className="solution-date">
+                        Добавлено: {formatSolutionDateTime(sol.createdAt)}
+                      </div>
+                      {wasSolutionEdited(sol) && sol.updatedAt && (
+                        <div className="solution-date">
+                          Изменено: {formatSolutionDateTime(sol.updatedAt)}
+                        </div>
+                      )}
+                    </div>
                   </button>
-                ))
+                  );
+                })
               ) : (
                 <div className="no-solutions">Пока никто не сдал</div>
               )}

@@ -6,7 +6,9 @@ import { CreditRecord, MarkRecord } from '../types/journal';
 import { Lesson } from '../types/lesson';
 import { CommentThread } from '../components/CommentThread';
 import { useComments } from '../hooks/useComments';
+import { useTeacherSubjectAccess } from '../hooks/useTeacherSubjectAccess';
 import { useAuth } from '../context/AuthContext';
+import { FileList } from '../components/FileListItem';
 import SolutionSubmissionMeta from '../components/SolutionSubmissionMeta';
 import {
   getTeacherSolution,
@@ -49,6 +51,16 @@ export const SolutionReviewPage: React.FC = () => {
   const [modalError, setModalError] = useState<string | null>(null);
   const [lessonType, setLessonType] = useState<string | null>(null);
 
+  const { canEdit: teacherCanEdit, isChecking: isCheckingTeacherAccess } =
+    useTeacherSubjectAccess({
+      groupId: gId,
+      subjectId: sId,
+      enabled: Boolean(gId && sId),
+    });
+
+  const isTeacherAccessPending =
+    isCheckingTeacherAccess || teacherCanEdit !== true;
+
   const commentScope = useMemo(
     () => ({
       groupId: gId,
@@ -77,6 +89,10 @@ export const SolutionReviewPage: React.FC = () => {
   }, [loadComments]);
 
   useEffect(() => {
+    if (teacherCanEdit !== true) {
+      return;
+    }
+
     const load = async () => {
       try {
         setIsLoading(true);
@@ -111,7 +127,7 @@ export const SolutionReviewPage: React.FC = () => {
       }
     };
     if (solId && gId && sId && lId && wId) load();
-  }, [solId, gId, sId, lId, wId]);
+  }, [solId, gId, sId, lId, wId, teacherCanEdit]);
 
   const goBack = () => {
     navigate(`/teacher/work/${wId}/${gId}/${sId}/${lId}`);
@@ -184,6 +200,10 @@ export const SolutionReviewPage: React.FC = () => {
     }
   };
 
+  if (isTeacherAccessPending) {
+    return <div className="page-loading">Загрузка...</div>;
+  }
+
   if (isLoading) {
     return <div className="page-loading">Загрузка...</div>;
   }
@@ -228,13 +248,7 @@ export const SolutionReviewPage: React.FC = () => {
         <div className="work-files-column">
           <h3>Файлы решения</h3>
           {solution.files && solution.files.length > 0 ? (
-            <ul className="file-list">
-              {solution.files.map((file) => (
-                <li key={file.id} className="file-item">
-                  <span className="file-item-name">{file.originalName}</span>
-                </li>
-              ))}
-            </ul>
+            <FileList files={solution.files} kind="solution" />
           ) : (
             <div className="no-files">Нет файлов</div>
           )}
