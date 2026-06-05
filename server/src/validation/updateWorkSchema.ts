@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { optionalDeadline } from "./workSchema";
 
 export const updateWorkSchema = Joi.object({
     title: Joi.string().max(200).optional().messages({
@@ -6,13 +7,10 @@ export const updateWorkSchema = Joi.object({
         'string.max' : 'Тема работы не может быть длиннее 200 символов',
         'string.base' : 'Тема работы должна быть строкой'
     }),
-    desciption: Joi.string().optional().messages({
+    description: Joi.string().optional().allow('').messages({
         'string.base' : 'Описание работы должно быть строкой'
     }),
-    deadline: Joi.date().iso().optional().messages({
-        'date.iso' : 'Дедлайн должен быть в формате iso',
-        'date.base' : 'Дедлайн должен быть в корректном формате даты (iso)',
-    }),
+    deadline: optionalDeadline,
     deleteFileIds: Joi
     .string()
     .optional()

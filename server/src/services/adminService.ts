@@ -54,7 +54,8 @@ export class AdminService {
             fullName: user.fullName,
             role: user.role,
             groupId: user.groupId,
-            groupName: user.group ? user.group.name : null
+            groupName: user.group ? user.group.name : null,
+            isExpelled: user.isExpelled
         }));
 
         return {
@@ -87,7 +88,8 @@ export class AdminService {
             passwordHash,
             fullName: dto.fullName,
             groupId: dto.groupId,
-            role: dto.role as UserRole
+            role: dto.role as UserRole,
+            isExpelled: false
         });
         await this.userRepository.save(newUser);
 
@@ -142,8 +144,12 @@ export class AdminService {
         existing.fullName = dto.fullName ?? existing.fullName;
         existing.groupId = dto.groupId ?? existing.groupId;
         existing.login = dto.login ?? existing.login;
-        existing.role = dto.role as UserRole;
-        existing.isExpelled = dto.isExpelled ?? existing.isExpelled;
+        if (dto.role) {
+            existing.role = dto.role as UserRole;
+        }
+        if (dto.isExpelled !== undefined) {
+            existing.isExpelled = dto.isExpelled;
+        }
 
         await this.userRepository.save(existing);
 
@@ -154,7 +160,7 @@ export class AdminService {
 
         return {
             data: { id: existing.id, fullName: existing.fullName, login: existing.login, role: existing.role, groupName: savedUser!.group?.name
-                , groupId: existing.groupId, isExelled: existing.isExpelled }
+                , groupId: existing.groupId, isExpelled: existing.isExpelled }
         };
     }
 

@@ -86,6 +86,8 @@ export class SolutionService {
             const solutionFileRepo = manager.getRepository(SolutionFile);
             const solution = await this.checkSolutionAndWork(workId, solutionId, studentId, lessonId, UserRole.STUDENT, manager);
 
+            let filesChanged = false;
+
             if (deleteFileIds && deleteFileIds.length > 0) {
                 const solutionsDir = path.resolve(process.cwd(), 'uploads/solutions/');
 
@@ -99,8 +101,7 @@ export class SolutionService {
                     }
                     await solutionFileRepo.remove(file);
                 }
-
-                await solutionRepo.update(solution.id, { updatedAt: new Date() })
+                filesChanged = true;
             }
 
             if (newFiles && newFiles.length > 0) {
@@ -115,7 +116,11 @@ export class SolutionService {
                 );
 
                 await solutionFileRepo.save(fileRecords);
-                await solutionRepo.update(solution.id, { updatedAt: new Date() })
+                filesChanged = true;
+            }
+
+            if (filesChanged) {
+                await solutionRepo.update({ id: solution.id }, { updatedAt: new Date() });
             }
 
             const updatedSolution = await solutionRepo.findOne({

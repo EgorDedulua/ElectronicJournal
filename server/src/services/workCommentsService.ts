@@ -24,10 +24,7 @@ export class WorkCommentsService {
         const lesson = await this.checkLesson(lessonId);
         this.checkLessonCourse(lesson, course);
 
-        const work = await this.workRepository.findOneBy({ id: workId });
-        if (!work) {
-            throw new AppError(`Не найдена работа с id ${workId}`, 404);
-        }
+        const work = await this.checkWorkForLesson(workId, lessonId);
 
         const comments = await this.commentRepository.find({
             where: { workId: workId },
@@ -58,10 +55,7 @@ export class WorkCommentsService {
         const lesson = await this.checkLesson(lessonId);
         this.checkLessonCourse(lesson, course);
 
-        const work = await this.workRepository.findOneBy({ id: workId });
-        if (!work) {
-            throw new AppError(`Не найдена работа с id ${workId}`, 404);
-        }
+        await this.checkWorkForLesson(workId, lessonId);
 
         if (dto.parentId) {
             const parent = await this.commentRepository.findOneBy({ id: dto.parentId, workId: workId });
@@ -95,10 +89,7 @@ export class WorkCommentsService {
         const lesson = await this.checkLesson(lessonId);
         this.checkLessonCourse(lesson, course);
 
-        const work = await this.workRepository.findOneBy({ id: workId });
-        if (!work) {
-            throw new AppError(`Не найдена работа с id ${workId}`, 404);
-        }
+        await this.checkWorkForLesson(workId, lessonId);
 
         const commentToUpdate = await this.commentRepository.findOneBy({ id: commentId, workId: workId });
         if (!commentToUpdate) {
@@ -129,10 +120,7 @@ export class WorkCommentsService {
         const lesson = await this.checkLesson(lessonId);
         this.checkLessonCourse(lesson, course);
 
-        const work = await this.workRepository.findOneBy({ id: workId });
-        if (!work) {
-            throw new AppError(`Не найдена работа с id ${workId}`, 404);
-        }
+        await this.checkWorkForLesson(workId, lessonId);
 
         const commentToDelete = await this.commentRepository.findOneBy({ id: commentId, workId: workId });
         if (!commentToDelete) {
@@ -181,6 +169,17 @@ export class WorkCommentsService {
         if (lesson.courseId != course.id) {
             throw new AppError(`Урок с id ${lesson.id} не принадлежит курсу с id ${course.id}`, 400);
         }
+    }
+
+    private static async checkWorkForLesson(workId: number, lessonId: number) {
+        const work = await this.workRepository.findOneBy({ id: workId });
+        if (!work) {
+            throw new AppError(`Не найдена работа с id ${workId}`, 404);
+        }
+        if (work.lessonId !== lessonId) {
+            throw new AppError('Работа не принадлежит указанному уроку', 400);
+        }
+        return work;
     }
 
     private static formatComment(comment: WorkComment) {

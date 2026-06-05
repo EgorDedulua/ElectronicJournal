@@ -127,11 +127,7 @@ export class WorkService {
                 await workFileRepo.save(fileRecords);
             }
 
-            await workRepo.update(workId, {
-                title: work.title,
-                description: work.description,
-                deadline: work.deadline
-            });
+            await workRepo.save(work);
 
             const updatedWork = await workRepo.findOne({ where: { id: workId }, relations: ['files'] });
             return await this.getReturningData(updatedWork!, updatedWork!.files, user);
@@ -220,10 +216,16 @@ export class WorkService {
                 where: { workId: work.id },
                 relations: ['student']
             });
-            data.solutions = solutions.map(s => ({
-                id: s.id,
-                studentName: s.student.fullName
-            }));
+            data.solutions = solutions
+                .map(s => ({
+                    id: s.id,
+                    studentName: s.student.fullName,
+                    createdAt: s.createdAt,
+                    updatedAt: s.updatedAt ?? null,
+                }))
+                .sort((a, b) =>
+                    a.studentName.localeCompare(b.studentName, 'ru', { sensitivity: 'base' })
+                );
         }
 
         return data;

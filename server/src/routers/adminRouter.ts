@@ -13,6 +13,7 @@ import { subjectsQuerySchema } from "@/validation/queries/subjectsQuerySchema";
 import { coursesQuerySchema } from "@/validation/queries/coursesQuerySchema";
 import { courseSchema } from "@/validation/courseSchema";
 import { timetableArraySchema, timetableSchema } from "@/validation/timetableSchema";
+import { timetablesQuerySchema } from "@/validation/queries/timetablesQuerySchema";
 import { updateUserSchema } from "@/validation/updateUserSchema";
 import { paramsSchema } from "@/validation/common/paramsSchema";
 
@@ -41,7 +42,7 @@ adminRouter.post('/courses', validate(courseSchema), AdminController.addCourse);
 adminRouter.delete('/courses/:courseId', validate(paramsSchema, 'params'), AdminController.deleteCourse);
 adminRouter.put('/courses/:courseId', validate(paramsSchema, 'params'), validate(courseSchema), AdminController.updateCourse);
 
-adminRouter.get('/timetables', validate(paramsSchema, 'params'), AdminController.getTimetables);
+adminRouter.get('/timetables', validate(timetablesQuerySchema, 'query'), AdminController.getTimetables);
 adminRouter.post('/timetables', validate(timetableArraySchema), AdminController.addTimetable);
 adminRouter.delete('/timetables/:timetableId', validate(paramsSchema, 'params'), AdminController.deleteTimetable);
 adminRouter.put('/timetables/:timetableId', validate(paramsSchema, 'params'), validate(timetableSchema), AdminController.updateTimetable);

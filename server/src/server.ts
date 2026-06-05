@@ -11,16 +11,18 @@ import studentRouter from './routers/studentRouter';
 import teacherRouter from './routers/teacherRouter';
 import path from 'path';
 import fs from 'fs/promises';
+import fileRouter from './routers/fileRouter';
 
-['uploads/works', 'uploads/solutions'].forEach(async (dir) => {
-    const fullPath = path.resolve(process.cwd(), dir);
-    try {
-        await fs.access(fullPath);
-        await fs.mkdir(fullPath, { recursive: true });
-    } catch (err) {
-        console.error(`Ошибка создания директории ${fullPath}:`, err)
+void (async () => {
+    for (const dir of ['uploads/works', 'uploads/solutions']) {
+        const fullPath = path.resolve(process.cwd(), dir);
+        try {
+            await fs.mkdir(fullPath, { recursive: true });
+        } catch (err) {
+            console.error(`Ошибка создания директории ${fullPath}:`, err);
+        }
     }
-});
+})();
 
 const app: Application = express();
 const PORT = config.PORT;
@@ -30,6 +32,7 @@ app.use('/api', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/student', studentRouter);
 app.use('/api/teacher', teacherRouter);
+app.use('/api/files', fileRouter);
 app.use(errorHandler);
 
 AppDataSource.initialize()

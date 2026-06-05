@@ -39,13 +39,23 @@ export class StudentService {
 
         const lessons = await this.lessonRepository
             .createQueryBuilder('lesson')
+            .leftJoinAndSelect('lesson.work', 'work')
             .innerJoin('lesson.course', 'course')
             .where('course.groupId = :groupId', { groupId: user.groupId })
             .andWhere('course.subjectId = :subjectId', { subjectId: subjectId })
             .orderBy('lesson.date', 'ASC')
             .getMany();
         
-        return { data: lessons };
+        const data = lessons.map(lesson => ({
+            id: lesson.id,
+            date: lesson.date,
+            topic: lesson.topic,
+            type: lesson.type,
+            courseId: lesson.courseId,
+            workId: lesson.work?.id ?? null
+        }));
+        
+        return { data };
     }
 
     public static async getMarks(userId: number, subjectId: number) {

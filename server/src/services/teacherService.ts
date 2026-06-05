@@ -154,7 +154,7 @@ export class TeacherService {
 
             let newCredit = null;
             if (lesson.type === LessonType.LAB || lesson.type === LessonType.PRACTICE) {
-                if (mark.mark > 3 && !await creditRepo.findOne({ where: { lessonId: lessonId, studentId: mark.studentId }})) {
+                if (mark.mark >= 3 && !await creditRepo.findOne({ where: { lessonId: lessonId, studentId: mark.studentId }})) {
                     
                     newCredit = creditRepo.create({
                         studentId: mark.studentId,
@@ -363,9 +363,19 @@ export class TeacherService {
         await this.checkTeacherAndGroup(userId, groupId);
 
         const group = await this.groupRepository.findOne({ where: { id: groupId }, relations: ['students']});
-        return {
-            data: group!.students
+        if (!group) {
+            throw new AppError(`Не найдена группа с id ${groupId}`, 404);
         }
+
+        const curator = group.students.find((user) => user.role === UserRole.TEACHER);
+        const students = group.students.filter((user) => user.role === UserRole.STUDENT);
+
+        return {
+            data: {
+                students,
+                curator: curator ? { id: curator.id, fullName: curator.fullName } : null
+            }
+        };
     }
 
     public static async getSubjects(userId: number, groupId: number) {
