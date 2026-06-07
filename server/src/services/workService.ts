@@ -100,18 +100,32 @@ export class WorkService {
             work.title = dto.title ?? work.title;
             work.deadline = dto.deadline ? new Date(dto.deadline) : work.deadline;
 
-            if (dto.deleteFileIds && dto.deleteFileIds.length > 0) {
+            const deleteFileIds = dto.deleteFileIds && dto.deleteFileIds.length > 0 ? dto.deleteFileIds : [];
+            if (deleteFileIds.length > 0) {
                 const worksDir = path.resolve(process.cwd(), 'uploads/works/');
-                const filesToRemove = work.files.filter(f => dto.deleteFileIds!.includes(f.id));
+                const filesToRemove = work.files.filter(f => deleteFileIds.includes(f.id));
+                work.files = work.files.filter(f => !deleteFileIds.includes(f.id));
                 for (const file of filesToRemove) {
                     const absolutePath = path.join(worksDir, file.storedName);
-                    try { 
-                        await fs.unlink(absolutePath); 
-                    } catch (err) { 
-                        console.error(`Ошибка удаления файла ${absolutePath}:`, err); 
+                    try {
+                        await fs.unlink(absolutePath);
+                    } catch (err) {
+                        console.error(`Ошибка удаления файла ${absolutePath}:`, err);
                     }
                     await workFileRepo.remove(file);
                 }
+            }
+
+            const updatedWorkFields: Partial<Work> = {};
+            if (dto.title !== undefined) updatedWorkFields.title = work.title;
+            if (dto.description !== undefined) updatedWorkFields.description = work.description;
+            if (dto.deadline !== undefined) updatedWorkFields.deadline = work.deadline;
+            if (deleteFileIds.length > 0 || (newFiles && newFiles.length > 0)) {
+                updatedWorkFields.updatedAt = new Date();
+            }
+
+            if (Object.keys(updatedWorkFields).length > 0) {
+                await workRepo.update({ id: work.id }, updatedWorkFields);
             }
 
             if (newFiles && newFiles.length > 0) {
@@ -121,13 +135,11 @@ export class WorkService {
                         storedName: f.filename,
                         mimetype: f.mimetype,
                         size: f.size,
-                        workId
+                        workId: work.id
                     })
                 );
                 await workFileRepo.save(fileRecords);
             }
-
-            await workRepo.save(work);
 
             const updatedWork = await workRepo.findOne({ where: { id: workId }, relations: ['files'] });
             return await this.getReturningData(updatedWork!, updatedWork!.files, user);

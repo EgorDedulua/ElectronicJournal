@@ -360,7 +360,14 @@ export class TeacherService {
     }
 
     public static async getStudents (userId: number, groupId: number) {
-        await this.checkTeacherAndGroup(userId, groupId);
+        const user = await this.userRepository.findOne({ where: { id: userId, role: UserRole.TEACHER }, relations: ['group'] });
+        if (!user) {
+            throw new AppError(`Не найден пользователь с id ${userId}`, 404);
+        }
+
+        if (user.group?.id !== groupId) {
+            await this.checkTeacherAndGroup(userId, groupId);
+        }
 
         const group = await this.groupRepository.findOne({ where: { id: groupId }, relations: ['students']});
         if (!group) {
@@ -437,20 +444,26 @@ export class TeacherService {
 
         await this.checkGroupAndSubjectExistance(groupId, subjectId);
         
-        if (user.group?.id !== groupId) {
+        const isCurator = user.group?.id === groupId;
+        if (!isCurator) {
             const course = await this.courseRepository.findOneBy({ subjectId: subjectId, groupId: groupId, teacherId: userId });
             if (!course) {
                 throw new AppError(`Преподаватель с id ${userId} не имеет доступа к предмету с id ${subjectId} в группе с id ${groupId}`, 403);
             }
         }
         
-        const lessons = await this.lessonRepository
+        const lessonsQuery = this.lessonRepository
             .createQueryBuilder('lesson')
             .innerJoin('lesson.course', 'course')
             .leftJoinAndSelect('lesson.work', 'work')
-            .where('course.teacherId = :teacherId', { teacherId: userId })
-            .andWhere('course.groupId = :groupId', { groupId: groupId })
-            .andWhere('course.subjectId = :subjectId', { subjectId: subjectId })
+            .where('course.groupId = :groupId', { groupId: groupId })
+            .andWhere('course.subjectId = :subjectId', { subjectId: subjectId });
+
+        if (!isCurator) {
+            lessonsQuery.andWhere('course.teacherId = :teacherId', { teacherId: userId });
+        }
+
+        const lessons = await lessonsQuery
             .orderBy('lesson.date', 'ASC')
             .getMany();
         
@@ -474,20 +487,26 @@ export class TeacherService {
 
         await this.checkGroupAndSubjectExistance(groupId, subjectId);
 
-        if (user.group?.id !== groupId) {
+        const isCurator = user.group?.id === groupId;
+        if (!isCurator) {
             const course = await this.courseRepository.findOneBy({ subjectId: subjectId, groupId: groupId, teacherId: userId });
             if (!course) {
                 throw new AppError(`Преподаватель с id ${userId} не имеет доступа к предмету с id ${subjectId} в группе с id ${groupId}`, 403)
             }
         }
 
-        const marks = await this.markRepository
+        const marksQuery = this.markRepository
             .createQueryBuilder('mark')
             .innerJoin('mark.lesson', 'lesson')
             .innerJoin('lesson.course', 'course')
-            .where('course.teacherId = :teacherId', { teacherId: userId })
-            .andWhere('course.groupId = :groupId', { groupId: groupId })
-            .andWhere('course.subjectId = :subjectId', { subjectId: subjectId })
+            .where('course.groupId = :groupId', { groupId: groupId })
+            .andWhere('course.subjectId = :subjectId', { subjectId: subjectId });
+
+        if (!isCurator) {
+            marksQuery.andWhere('course.teacherId = :teacherId', { teacherId: userId });
+        }
+
+        const marks = await marksQuery
             .orderBy('lesson.date', 'ASC')
             .getMany();
         
@@ -502,20 +521,26 @@ export class TeacherService {
 
         await this.checkGroupAndSubjectExistance(groupId, subjectId);
 
-        if (user.group?.id !== groupId) {
+        const isCurator = user.group?.id === groupId;
+        if (!isCurator) {
             const course = await this.courseRepository.findOneBy({ subjectId: subjectId, groupId: groupId, teacherId: userId });
             if (!course) {
                 throw new AppError(`Преподаватель с id ${userId} не имеет доступа к предмету с id ${subjectId} в группе с id ${groupId}`, 403)
             }
         }
 
-        const absences = await this.absenceRepository
+        const absencesQuery = this.absenceRepository
             .createQueryBuilder('absence')
             .innerJoin('absence.lesson', 'lesson')
             .innerJoin('lesson.course', 'course')
-            .where('course.teacherId = :teacherId', { teacherId: userId })
-            .andWhere('course.groupId = :groupId', { groupId: groupId })
-            .andWhere('course.subjectId = :subjectId', { subjectId: subjectId })
+            .where('course.groupId = :groupId', { groupId: groupId })
+            .andWhere('course.subjectId = :subjectId', { subjectId: subjectId });
+
+        if (!isCurator) {
+            absencesQuery.andWhere('course.teacherId = :teacherId', { teacherId: userId });
+        }
+
+        const absences = await absencesQuery
             .orderBy('lesson.date', 'ASC')
             .getMany();
         
@@ -530,20 +555,26 @@ export class TeacherService {
 
         await this.checkGroupAndSubjectExistance(groupId, subjectId);
 
-        if (user.group?.id !== groupId) {
+        const isCurator = user.group?.id === groupId;
+        if (!isCurator) {
             const course = await this.courseRepository.findOneBy({ subjectId: subjectId, groupId: groupId, teacherId: userId });
             if (!course) {
                 throw new AppError(`Преподаватель с id ${userId} не имеет доступа к предмету с id ${subjectId} в группе с id ${groupId}`, 403)
             }
         }
 
-        const lates = await this.lateRepository
+        const latesQuery = this.lateRepository
             .createQueryBuilder('late')
             .innerJoin('late.lesson', 'lesson')
             .innerJoin('lesson.course', 'course')
-            .where('course.teacherId = :teacherId', { teacherId: userId })
-            .andWhere('course.groupId = :groupId', { groupId: groupId })
-            .andWhere('course.subjectId = :subjectId', { subjectId: subjectId })
+            .where('course.groupId = :groupId', { groupId: groupId })
+            .andWhere('course.subjectId = :subjectId', { subjectId: subjectId });
+
+        if (!isCurator) {
+            latesQuery.andWhere('course.teacherId = :teacherId', { teacherId: userId });
+        }
+
+        const lates = await latesQuery
             .orderBy('lesson.date', 'ASC')
             .getMany();
         
@@ -558,20 +589,26 @@ export class TeacherService {
 
         await this.checkGroupAndSubjectExistance(groupId, subjectId);
 
-        if (user.group?.id !== groupId) {
+        const isCurator = user.group?.id === groupId;
+        if (!isCurator) {
             const course = await this.courseRepository.findOneBy({ subjectId: subjectId, groupId: groupId, teacherId: userId });
             if (!course) {
                 throw new AppError(`Преподаватель с id ${userId} не имеет доступа к предмету с id ${subjectId} в группе с id ${groupId}`, 403)
             }
         }
 
-        const credits = await this.creditRepository
+        const creditsQuery = this.creditRepository
             .createQueryBuilder('credit')
             .innerJoin('credit.lesson', 'lesson')
             .innerJoin('lesson.course', 'course')
-            .where('course.teacherId = :teacherId', { teacherId: userId })
-            .andWhere('course.groupId = :groupId', { groupId: groupId })
-            .andWhere('course.subjectId = :subjectId', { subjectId: subjectId })
+            .where('course.groupId = :groupId', { groupId: groupId })
+            .andWhere('course.subjectId = :subjectId', { subjectId: subjectId });
+
+        if (!isCurator) {
+            creditsQuery.andWhere('course.teacherId = :teacherId', { teacherId: userId });
+        }
+
+        const credits = await creditsQuery
             .orderBy('lesson.date', 'ASC')
             .getMany();
         
